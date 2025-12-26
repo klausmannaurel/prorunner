@@ -1,0 +1,56 @@
+<div class="modal-overlay" id="admin-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fas fa-stopwatch" style="color: var(--accent-color);"></i> Új Eredmény</h3>
+            <button onclick="closeModal('admin-modal')" style="background:none; border:none; font-size:1.2rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="admin-form">
+            <div class="form-group">
+                <label>Pálya</label>
+                <div style="position:relative;">
+                    <select id="input-track" class="form-control" required>
+                        <option value="" disabled selected>-- Válassz --</option>
+                    </select>
+                    <i class="fas fa-chevron-down" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none;"></i>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Futó Neve</label>
+                <input type="text" id="input-name" class="form-control" placeholder="pl. Gipsz Jakab">
+                <small id="name-lock-msg" style="display:none; color: var(--accent-color); font-weight:600; margin-top:4px;"><i class="fas fa-lock"></i> Bejelentkezve mint: <span id="locked-name"></span></small>
+            </div>
+            <div class="form-group"><label>Körök</label><input type="number" id="input-laps" class="form-control" value="1" min="1" readonly style="background:#f1f5f9;"></div>
+            <div class="form-group">
+                <label>Köridők (perc:mp)</label>
+                <div id="laps-container" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px; padding-right:5px;"></div>
+                <button type="button" class="btn-secondary" onclick="addLapInput()" style="width:100%; border:1px dashed #ccc; background:none; padding:8px; border-radius:8px; cursor:pointer; font-size:0.9rem;"><i class="fas fa-plus"></i> Új kör hozzáadása</button>
+            </div>
+            <button class="btn-submit" onclick="addNewResult()">Rögzítés <i class="fas fa-arrow-right" style="margin-left: 8px;"></i></button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="login-modal">
+    <div class="modal-card" style="max-width: 380px;">
+        <div class="modal-header">
+            <h3>Bejelentkezés</h3><button onclick="closeModal('login-modal')" style="background:none; border:none; font-size:1.2rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="form-group"><label>Felhasználónév</label><input type="text" id="login-username" class="form-control"></div>
+        <div class="form-group"><label>Jelszó</label><input type="password" id="login-password" class="form-control"></div>
+        <button class="btn-submit" onclick="performLogin()">Belépés</button>
+        <div class="modal-footer-link">Nincs még fiókod? <a onclick="switchToRegister()">Regisztrálj!</a></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="register-modal">
+    <div class="modal-card" style="max-width: 380px;">
+        <div class="modal-header">
+            <h3>Regisztráció</h3><button onclick="closeModal('register-modal')" style="background:none; border:none; font-size:1.2rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="form-group"><label>Felhasználónév</label><input type="text" id="reg-username" class="form-control"></div>
+        <div class="form-group"><label>Teljes Név</label><input type="text" id="reg-fullname" class="form-control"></div>
+        <div class="form-group"><label>Jelszó</label><input type="password" id="reg-password" class="form-control"></div>
+        <button class="btn-submit" onclick="performRegister()">Fiók létrehozása</button>
+        <div class="modal-footer-link">Már van fiókod? <a onclick="switchToLogin()">Jelentkezz be!</a></div>
+    </div>
+</div>
