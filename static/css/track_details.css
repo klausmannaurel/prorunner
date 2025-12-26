@@ -204,29 +204,114 @@ p.track-desc {
     text-transform: uppercase;
 }
 
-.amenity-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+/* --- static/css/track_details.css --- */
+
+.amenities-grid-modal {
+    display: grid;
+    /* EZ A KULCS: Pontosan 6 egyenlő részre osztjuk a helyet */
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px; /* Kisebb hézag a dobozok között */
+    width: 100%;
+    margin-top: 15px;
 }
 
-.amenity-tag {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-size: 0.9rem;
+/* Kártya alap kinézete - Kompaktabb méretekkel */
+.amenity-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px; /* Kicsit kisebb lekerekítés */
+    padding: 10px 4px; /* Kevesebb belső térköz, hogy elférjen */
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    border: 1px solid transparent;
-    opacity: 0.5; /* Alapból halvány */
+    position: relative;
+    overflow: visible;
+    cursor: default;
+    min-height: 80px; /* Egységes magasság */
 }
 
-.amenity-tag.active {
-    opacity: 1;
-    border-color: var(--neon-green);
-    color: var(--neon-green);
+/* Ikon méretét picit csökkentjük */
+.amenity-card i {
+    font-size: 1.4rem; /* 1.8rem helyett */
+    margin-bottom: 2px;
+    color: #e2e8f0;
+    transition: all 0.3s;
+    text-shadow: none;
+}
+
+/* Szöveg méretét csökkentjük, hogy ne lógjon ki */
+.amenity-card span {
+    font-size: 0.65rem; /* 0.8rem helyett */
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0px; /* Helytakarékosság miatt */
+    color: var(--text-muted);
+    transition: color 0.3s;
+    white-space: nowrap; /* Ne törje meg a szöveget, ha lehet */
+}
+
+/* --- MOBIL NÉZET JAVÍTÁS --- */
+/* Mobilon a 6 db egy sorban túl kicsi lenne, ott maradjon 3-3 */
+@media (max-width: 768px) {
+    .amenities-grid-modal {
+        grid-template-columns: repeat(3, 1fr); /* Mobilon 3 oszlop (2 sor) */
+    }
+}
+
+/* --- HA VAN (PRESENT) - HOVER EFFEKTEK (VÁLTOZATLANOK) --- */
+
+.amenity-card.present:hover {
+    background: rgba(0, 243, 255, 0.05);
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+    transform: translateY(-3px);
+    z-index: 10; /* Hogy a szomszédok fölé emelkedjen */
+}
+
+.amenity-card.present:hover span {
+    color: var(--neon-blue);
+}
+
+.amenity-card.present:hover i {
+    color: var(--neon-blue);
+    text-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+    transform: scale(1.1);
+}
+
+/* --- INGYENES (ZÖLD) --- */
+.amenity-card.present.free-badge:hover {
+    border-color: var(--neon-green) !important;
     background: rgba(57, 255, 20, 0.05);
+    box-shadow: 0 0 20px rgba(57, 255, 20, 0.2) !important;
+}
+
+.amenity-card.present.free-badge:hover span {
+    color: var(--neon-green) !important;
+}
+
+.amenity-card.present.free-badge:hover i {
+    color: var(--neon-green) !important;
+    text-shadow: 0 0 15px rgba(57, 255, 20, 0.6) !important;
+}
+
+/* --- HA NINCS (MISSING) --- */
+.amenity-card.missing {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.05);
+    opacity: 0.5;
+}
+
+.amenity-card.missing i {
+    color: #475569;
+}
+
+.amenity-card.missing span {
+    color: #475569;
+    text-decoration: line-through;
 }
 
 /* --- CSILLAGOZÁS --- */
