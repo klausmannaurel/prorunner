@@ -1,1 +1,530 @@
+{% extends 'base.html' %}
 
+{% block content %}
+<div class="hero-section">
+
+    <div class="cyber-lines-container">
+        <div class="cyber-line line-1"></div>
+        <div class="cyber-line line-2"></div>
+        <div class="cyber-line line-3"></div>
+    </div>
+
+    <div class="hud-corner top-left"></div>
+    <div class="hud-corner top-right"></div>
+    <div class="hud-corner bottom-left"></div>
+    <div class="hud-corner bottom-right"></div>
+
+    <div class="glow-spot spot-1"></div>
+    <div class="glow-spot spot-2"></div>
+
+    <div class="side-decor left-decor">
+        <svg width="60" height="400" viewBox="0 0 60 400" fill="none">
+            <rect x="25" y="50" width="6" height="300" rx="3" fill="#39ff14" opacity="0.2" />
+            <circle cx="28" cy="100" r="6" fill="#00f3ff" filter="blur(4px)">
+                <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite" />
+            </circle>
+        </svg>
+    </div>
+
+    <div class="side-decor right-decor">
+        <svg width="60" height="400" viewBox="0 0 60 400" fill="none">
+            <rect x="25" y="20" width="4" height="200" rx="2" fill="#00f3ff" opacity="0.2" />
+            <circle cx="27" cy="220" r="4" fill="#39ff14" filter="blur(3px)">
+                <animate attributeName="opacity" values="0.5;1;0.5" dur="4s" repeatCount="indefinite" />
+            </circle>
+        </svg>
+    </div>
+
+    <div class="glass-portal-container">
+
+        <div class="side-decor left-decor">
+            <div class="decor-stripe"></div>
+        </div>
+
+        <div class="side-decor right-decor">
+            <div class="decor-stripe"></div>
+        </div>
+
+        <div class="portal-frame floating-element">
+
+            <div class="corner-accent tl"></div>
+            <div class="corner-accent tr"></div>
+            <div class="corner-accent bl"></div>
+            <div class="corner-accent br"></div>
+
+            <div class="video-mask">
+                <video autoplay muted loop playsinline class="bg-video" poster="/static/images/hero_poster.jpg">
+                    <source src="/static/videos/hero_run.mp4" type="video/mp4">
+                </video>
+
+                <div class="video-grid-overlay"></div>
+                <div class="scan-line"></div>
+
+                <div class="tech-badge">
+                    <span class="tech-label">SYS.OPTIMIZED</span>
+                    <span class="blink status-dot">●</span>
+                    ONLINE
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-content">
+            <h1 class="hero-title">
+                Fuss a <span class="neon-text">Jövőbe</span>
+            </h1>
+
+            <p class="hero-subtitle">
+                Fedezd fel a város legmodernebb futópályáit. <br>
+                <span class="highlight-muted">Tiszta energia. Neon fények. Határtalan sebesség.</span>
+            </p>
+
+            <div class="hero-buttons">
+                <a href="/tracks" class="btn-hero primary">
+                    Pályák Felfedezése <i class="fas fa-chevron-right icon-slide"></i>
+                </a>
+
+                <a href="{% url 'my_results' %}" class="btn-hero secondary">
+                    Eredményeim
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* --- ANIMÁCIÓK (GPU optimalizált) --- */
+    @keyframes floatVertical {
+
+        0%,
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+
+        50% {
+            transform: translate3d(0, -15px, 0);
+        }
+    }
+
+    @keyframes neonPulseOpacity {
+
+        0%,
+        100% {
+            opacity: 1;
+            filter: brightness(1);
+        }
+
+        50% {
+            opacity: 0.8;
+            filter: brightness(1.2);
+        }
+    }
+
+    @keyframes scanlineMove {
+        0% {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+
+        15% {
+            opacity: 1;
+        }
+
+        85% {
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateY(800px);
+            opacity: 0;
+        }
+    }
+
+    /* Oldalsó csíkok pulzálása */
+    @keyframes linePulse {
+
+        0%,
+        100% {
+            height: 100px;
+            opacity: 0.3;
+        }
+
+        50% {
+            height: 180px;
+            opacity: 0.8;
+        }
+    }
+
+    /* --- FŐ LAYOUT & HÁTTÉR RÁCS --- */
+    .hero-section {
+        min-height: 95vh;
+        width: 100%;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        padding: 80px 20px 40px 20px;
+        background: radial-gradient(circle at center, #0a1120 0%, #050b14 100%);
+    }
+
+    /* JAVÍTOTT, ÉLÉNK HÁTTÉR RÁCS */
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        /* Világosabb cián rácsozat (0.15 alpha) */
+        background-image:
+            linear-gradient(rgba(0, 243, 255, 0.2) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 243, 255, 0.2) 1px, transparent 1px);
+        background-size: 50px 50px;
+        opacity: 0.8;
+        /* Összességében is láthatóbb */
+        z-index: 0;
+        pointer-events: none;
+        mask-image: radial-gradient(circle at center, black 50%, transparent 100%);
+        -webkit-mask-image: radial-gradient(circle at center, black 50%, transparent 100%);
+    }
+
+    /* --- PORTAL CONTAINER --- */
+    .glass-portal-container {
+        position: relative;
+        width: 100%;
+        max-width: 1400px;
+        height: 700px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        perspective: 1200px;
+    }
+
+    /* --- SIDE DECOR (Oldalsó csíkok) --- */
+    .side-decor {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 300px;
+        width: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+    }
+
+    .left-decor {
+        left: -30px;
+    }
+
+    .right-decor {
+        right: -30px;
+    }
+
+    .decor-stripe {
+        width: 2px;
+        background: linear-gradient(to bottom, transparent, #00f3ff, transparent);
+        box-shadow: 0 0 15px #00f3ff;
+        border-radius: 2px;
+        animation: linePulse 4s ease-in-out infinite;
+    }
+
+    .right-decor .decor-stripe {
+        background: linear-gradient(to bottom, transparent, #39ff14, transparent);
+        box-shadow: 0 0 15px #39ff14;
+        animation-delay: 2s;
+    }
+
+    /* --- PORTAL FRAME (KERET) --- */
+    .portal-frame {
+        position: relative;
+        width: 100%;
+        height: 100%;
+
+        /* MATEK: 50px (belső) + 14px (padding) = 64px (külső) */
+        padding: 14px;
+        border-radius: 64px;
+
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        box-shadow:
+            0 20px 50px rgba(0, 0, 0, 0.6),
+            inset 0 0 30px rgba(0, 243, 255, 0.05);
+        will-change: transform;
+        animation: floatVertical 6s ease-in-out infinite;
+    }
+
+    /* Dekoratív sarkok */
+    .corner-accent {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(0, 243, 255, 0.5);
+        z-index: 20;
+        box-shadow: 0 0 8px rgba(0, 243, 255, 0.2);
+    }
+
+    .tl {
+        top: -2px;
+        left: -2px;
+        border-width: 2px 0 0 2px;
+        border-radius: 80px 0 0 0;
+    }
+
+    .tr {
+        top: -2px;
+        right: -2px;
+        border-width: 2px 2px 0 0;
+        border-radius: 0 80px 0 0;
+    }
+
+    .bl {
+        bottom: -2px;
+        left: -2px;
+        border-width: 0 0 2px 2px;
+        border-radius: 0 0 0 80px;
+    }
+
+    .br {
+        bottom: -2px;
+        right: -2px;
+        border-width: 0 2px 2px 0;
+        border-radius: 0 0 80px 0;
+    }
+
+    /* --- VIDEO AREA --- */
+    .video-mask {
+        width: 100%;
+        height: 100%;
+
+        /* Belső sugár: 50px */
+        border-radius: 50px;
+
+        overflow: hidden;
+        position: relative;
+        background: #000;
+        transform: translateZ(0);
+    }
+
+    .bg-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.8;
+    }
+
+    .video-grid-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, transparent 40%, rgba(5, 11, 20, 0.8) 120%);
+        z-index: 2;
+    }
+
+    .scan-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: rgba(0, 243, 255, 0.6);
+        box-shadow: 0 0 10px rgba(0, 243, 255, 0.6);
+        z-index: 5;
+        animation: scanlineMove 6s linear infinite;
+        pointer-events: none;
+        opacity: 0;
+    }
+
+    .tech-badge {
+        position: absolute;
+        bottom: 25px;
+        right: 40px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #39ff14;
+        font-family: monospace;
+        font-size: 0.75rem;
+        z-index: 6;
+        backdrop-filter: blur(4px);
+    }
+
+    /* --- GLASS CONTENT (Kártya) --- */
+    .glass-content {
+        position: absolute;
+        top: 65%;
+        /* Lejjebb tolva, hogy ne takarjon */
+        left: 50%;
+        transform: translate(-50%, -50%);
+
+        width: 90%;
+        max-width: 520px;
+        /* Keskenyebb */
+        padding: 35px 30px;
+        text-align: center;
+
+        background: rgba(13, 19, 33, 0.6);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+        border-radius: 24px;
+        z-index: 20;
+    }
+
+    .hero-title {
+        font-family: 'Exo 2', sans-serif;
+        font-size: 3.2rem;
+        font-weight: 800;
+        margin: 0 0 10px 0;
+        line-height: 1.1;
+        color: white;
+        text-transform: uppercase;
+        font-style: italic;
+    }
+
+    .neon-text {
+        color: #00f3ff;
+        text-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+        animation: neonPulseOpacity 3s infinite alternate;
+    }
+
+    .hero-subtitle {
+        font-family: 'Exo 2', sans-serif;
+        font-size: 1rem;
+        color: #94a3b8;
+        margin-bottom: 30px;
+        line-height: 1.5;
+    }
+
+    .highlight-muted {
+        color: #cbd5e1;
+        font-weight: 600;
+    }
+
+    /* --- GOMBOK --- */
+    .hero-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .btn-hero {
+        position: relative;
+        padding: 14px 32px;
+        border-radius: 50px;
+        /* Lekerekítve */
+        text-decoration: none;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Exo 2', sans-serif;
+    }
+
+    .btn-hero.primary {
+        background: linear-gradient(135deg, rgba(0, 243, 255, 0.8), rgba(57, 255, 20, 0.8));
+        color: #050b14;
+        border: none;
+        box-shadow: 0 0 15px rgba(0, 243, 255, 0.25);
+    }
+
+    .btn-hero.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 25px rgba(0, 243, 255, 0.5);
+        color: #000;
+    }
+
+    .btn-hero.secondary {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(4px);
+    }
+
+    .btn-hero.secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: #39ff14;
+        color: #39ff14;
+        box-shadow: 0 0 15px rgba(57, 255, 20, 0.1);
+    }
+
+    .icon-slide {
+        transition: transform 0.3s;
+    }
+
+    .btn-hero.primary:hover .icon-slide {
+        transform: translateX(4px);
+    }
+
+    /* --- MOBIL NÉZET (14px Vastagság megtartva!) --- */
+    @media (max-width: 900px) {
+        .glass-portal-container {
+            flex-direction: column;
+            height: auto;
+            max-width: 100%;
+        }
+
+        .side-decor {
+            display: none;
+        }
+
+        .portal-frame {
+            height: 300px;
+            width: 100%;
+            margin-bottom: -50px;
+            animation: none;
+
+            /* MOBIL MATEK: Tartjuk a 14px keretet! */
+            padding: 14px;
+
+            /* Külső: 44px (hogy mobilon ne legyen túl nagy a kerekítés) */
+            border-radius: 44px;
+        }
+
+        .video-mask {
+            /* Belső: 44px - 14px = 30px */
+            border-radius: 30px;
+        }
+
+        .glass-content {
+            position: relative;
+            top: auto;
+            left: auto;
+            transform: none;
+            width: 100%;
+            max-width: 100%;
+            background: rgba(13, 19, 33, 0.80);
+            backdrop-filter: none;
+            border-radius: 0 0 20px 20px;
+            border: none;
+            box-shadow: none;
+            padding: 50px 20px 30px 20px;
+        }
+
+        .hero-title {
+            font-size: 2rem;
+        }
+
+        .hero-buttons {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .btn-hero {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
