@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* Egyedi stílusok a táblázathoz */
+    .results-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 20px;
+    }
+
+    .results-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .results-header h2 {
+        font-size: 2.5rem;
+        text-transform: uppercase;
+        font-style: italic;
+        background: linear-gradient(90deg, #fff, var(--neon-blue));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+    }
+
+    /* GLASS TABLEAU DESIGN */
+    .glass-table-wrapper {
+        background: rgba(20, 25, 40, 0.6);
+        backdrop-filter: blur(16px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+        /* Lekerekítés miatt */
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        position: relative;
+    }
+
+    /* Fénycsík a tetején */
+    .glass-table-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+    }
+
+    .neon-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: white;
+        font-family: 'Exo 2', sans-serif;
+    }
+
+    .neon-table thead {
+        background: rgba(0, 243, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .neon-table th {
+        padding: 20px;
+        text-align: left;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--neon-blue);
+        font-size: 0.9rem;
+    }
+
+    .neon-table td {
+        padding: 18px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        vertical-align: middle;
+    }
+
+    .neon-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .neon-table tr:hover td {
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    /* Adat formázás */
+    .res-date {
+        color: #94a3b8;
+        font-size: 0.9rem;
+    }
+
+    .res-track {
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .res-time {
+        font-family: monospace;
+        font-size: 1.2rem;
+        color: var(--neon-green);
+        text-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+        font-weight: bold;
+    }
+
+    .res-dist {
+        color: white;
+        font-weight: 600;
+    }
+
+    .track-icon {
+        width: 30px;
+        height: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        color: var(--neon-blue);
+    }
+
+    /* Üres állapot */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #94a3b8;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Mobil nézet: Kártyás elrendezés */
+    @media (max-width: 768px) {
+        .neon-table thead {
+            display: none;
+        }
+
+        .neon-table,
+        .neon-table tbody,
+        .neon-table tr,
+        .neon-table td {
+            display: block;
+            width: 100%;
+        }
+
+        .neon-table tr {
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
+        }
+
+        .neon-table td {
+            padding: 8px 0;
+            border: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: right;
+        }
+
+        .neon-table td::before {
+            content: attr(data-label);
+            float: left;
+            font-weight: bold;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="glow-spot spot-1"></div>
+<div class="glow-spot spot-2"></div>
+
+<div class="results-container">
+
+    <div class="results-header">
+        <h2><i class="fas fa-trophy"></i> Saját Eredményeim</h2>
+        <p style="color: #94a3b8;">Az eddigi összes rögzített futásod egy helyen.</p>
+    </div>
+
+    <div class="glass-table-wrapper">
+        {% if results %}
+        <table class="neon-table">
+            <thead>
+                <tr>
+                    <th>Dátum</th>
+                    <th>Pálya</th>
+                    <th>Távolság</th>
+                    <th>Körök</th>
+                    <th>Idő</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for res in results %}
+                <tr>
+                    <td data-label="Dátum" class="res-date">
+                        <i class="far fa-calendar-alt"></i> {{ res.date|date:"Y. m. d." }}
+                    </td>
+                    <td data-label="Pálya" class="res-track">
+                        <div class="track-icon"><i class="fas fa-map-marker-alt"></i></div>
+                        {{ res.track.name }}
+                    </td>
+                    <td data-label="Távolság" class="res-dist">
+                        {% widthratio res.laps_count 1 res.track.distance_km_per_lap %} km
+                    </td>
+                    <td data-label="Körök">
+                        {{ res.laps_count }} kör
+                    </td>
+                    <td data-label="Idő" class="res-time">
+                        {{ res.time }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-running"></i></div>
+            <h3>Még nincs rögzített eredményed.</h3>
+            <p>Használd a Stoppert vagy a Dashboardot új futás rögzítéséhez!</p>
+            <br>
+            <a href="{% url 'stopwatch' %}" class="btn-hero primary" style="display:inline-flex; text-decoration:none;">
+                Futás Indítása
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,300;0,500;0,700;0,900;1,700&display=swap"
+    rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link rel="stylesheet" href="/static/css/tracks.css">
+<link rel="stylesheet" href="/static/css/track_details.css">
+{% endblock %}
+
+{% block content %}
+
+<div class="glow-spot spot-1"></div>
+<div class="glow-spot spot-2"></div>
+
+<div class="tracks-page-container">
+
+    <div class="tracks-header">
+        <h2>Fedezd fel a pályákat</h2>
+        <p>Válassz a város legjobb futópályái közül, és találd meg a neked valót!</p>
+    </div>
+
+    <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all"><i class="fas fa-layer-group"></i> Összes</button>
+        <button class="filter-btn" data-filter="rekortan"><i class="fas fa-road"></i> Rekortán</button>
+        <button class="filter-btn" data-filter="concrete"><i class="fas fa-city"></i> Beton/Aszfalt</button>
+        <button class="filter-btn" data-filter="free"><i class="fas fa-wallet"></i> Ingyenes</button>
+        <button class="filter-btn" data-filter="lighting"><i class="fas fa-lightbulb"></i> Világítás</button>
+        <button class="filter-btn" data-filter="dog"><i class="fas fa-dog"></i> Kutyabarát</button>
+    </div>
+
+    <div id="tracks-grid" class="container">
+        <div class="loading-spinner">
+            <i class="fas fa-circle-notch fa-spin"></i> Betöltés...
+        </div>
+    </div>
+
+    <button class="fab-btn" onclick="openTrackModal()" title="Új pálya felvétele">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <div class="modal-overlay" id="track-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-title"><i class="fas fa-map-marker-alt" style="color: var(--neon-blue);"></i> Új Pálya
+                </h3>
+                <button onclick="closeModal('track-modal')"
+                    style="background:none; border:none; font-size:1.2rem; cursor:pointer; color: var(--text-muted);">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="admin-form">
+                <div class="form-group">
+                    <label>Pálya neve</label>
+                    <input type="text" id="new-track-name" class="form-control" placeholder="pl. Városliget futókör">
+                </div>
+
+                <div class="data-grid"
+                    style="border:none; padding:0; gap:15px; margin-bottom:15px; display: grid; grid-template-columns: 1fr 1fr;">
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600; color:var(--text-muted);">Hossz (km)</label>
+                        <input type="number" id="new-track-dist" class="form-control" step="0.1" placeholder="5.3">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600; color:var(--text-muted);">Borítás</label>
+                        <select id="new-track-surface" class="form-control">
+                            <option value="Rekortán">Rekortán</option>
+                            <option value="Beton">Beton</option>
+                            <option value="Aszfalt">Aszfalt</option>
+                            <option value="Erdei út">Erdei út</option>
+                            <option value="Salak">Salak</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="data-grid"
+                    style="border:none; padding:0; gap:15px; margin-bottom:15px; display: grid; grid-template-columns: 1fr 1fr;">
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600; color:var(--text-muted);">Szélesség
+                            (Lat)</label>
+                        <input type="text" id="new-track-lat" class="form-control" placeholder="47.5...">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85rem; font-weight:600; color:var(--text-muted);">Hosszúság
+                            (Lon)</label>
+                        <input type="text" id="new-track-lon" class="form-control" placeholder="19.0...">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Pálya fotó feltöltése</label>
+                    <input type="file" id="new-track-img" class="form-control" accept="image/*">
+                    <small style="color:var(--text-muted); font-size:0.8rem;">Max. 5MB, JPG/PNG formátum
+                        javasolt.</small>
+                </div>
+
+                <label
+                    style="font-weight:600; margin-bottom:10px; display:block; color:var(--text-main);">Tulajdonságok</label>
+                <div class="features-grid">
+                    <label class="feature-checkbox"><input type="checkbox" id="check-free" checked>
+                        <span>Ingyenes</span></label>
+                    <label class="feature-checkbox"><input type="checkbox" id="check-lighting">
+                        <span>Világítás</span></label>
+                    <label class="feature-checkbox"><input type="checkbox" id="check-dog">
+                        <span>Kutyabarát</span></label>
+                    <label class="feature-checkbox"><input type="checkbox" id="check-shower">
+                        <span>Zuhany</span></label>
+                    <label class="feature-checkbox"><input type="checkbox" id="check-parking">
+                        <span>Parkoló</span></label>
+                    <label class="feature-checkbox"><input type="checkbox" id="check-lockers">
+                        <span>Öltöző</span></label>
+                </div>
+
+                <button class="btn-submit btn-primary" onclick="saveNewTrack()"
+                    style="margin-top:20px; width:100%; padding:12px; border-radius:10px;">
+                    Pálya Mentése <i class="fas fa-save" style="margin-left: 8px;"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="full-page-detail" class="track-detail-overlay">
+
+        <div class="close-modal-btn" onclick="closeDetailView()" title="Bezárás">
+            <i class="fas fa-times"></i>
+        </div>
+
+        <div class="parallax-bg" id="detail-bg-image"></div>
+
+        <div class="scroll-container">
+
+            <div class="hero-title-section">
+                <h1 class="hero-track-name" id="detail-hero-name">PÁLYA NEVE</h1>
+
+                <div class="hero-badges" id="detail-hero-badges">
+                </div>
+
+                <div style="margin-top: 20px; font-size: 1.2rem; color: #fff;">
+                    <i class="fas fa-star" style="color: #FFD700;"></i> <span id="detail-rating-text">0.0 (0
+                        értékelés)</span>
+                </div>
+
+                <div style="margin-top: 40px; animation: bounce 2s infinite;">
+                    <i class="fas fa-chevron-down" style="font-size: 2rem; color: rgba(255,255,255,0.5);"></i>
+                </div>
+            </div>
+
+            <div class="details-sheet">
+                <div class="content-grid">
+
+                    <div class="left-col">
+                        <div class="info-card">
+                            <h3 class="section-title"><i class="fas fa-info-circle"></i> A Pályáról</h3>
+                            <p class="track-desc" id="detail-desc">
+                            </p>
+
+                            <div class="stats-grid">
+                                <div class="stat-box">
+                                    <span class="stat-value" id="stat-dist">0 km</span>
+                                    <span class="stat-label">Hossz / Kör</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-value" id="stat-surface">?</span>
+                                    <span class="stat-label">Borítás</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-value" id="stat-coords">?</span>
+                                    <span class="stat-label">Koordináták</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-value" id="stat-open">24/7</span>
+                                    <span class="stat-label">Nyitvatartás</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-card">
+                            <h3 class="section-title"><i class="fas fa-concierge-bell"></i> Szolgáltatások</h3>
+                            <div class="amenity-list" id="detail-amenities">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="right-col">
+
+                        <div class="info-card weather-card" id="weather-card" style="display:none;">
+
+                            <div style="text-align: center; margin-bottom: 10px;">
+                                <div id="location-name" class="location-badge">
+                                    <i class="fas fa-map-marker-alt"></i> Helyszín betöltése...
+                                </div>
+                            </div>
+
+                            <div class="weather-grid">
+                                <div class="weather-icon-box">
+                                    <i id="weather-icon" class="fas fa-circle-notch fa-spin"></i>
+                                </div>
+                                <div class="weather-data">
+                                    <div class="temp-display" id="weather-temp">--°C</div>
+                                    <div class="wind-display" id="weather-desc">Betöltés...</div>
+                                </div>
+                            </div>
+
+                            <div class="weather-details-grid" id="weather-extras"
+                                style="opacity: 0; transition: opacity 0.5s;">
+
+                                <div class="detail-item" title="Napi maximum UV sugárzás">
+                                    <i class="fas fa-sun" style="color: var(--neon-gold);"></i>
+                                    <span id="uv-display">UV: --</span>
+                                </div>
+
+                                <div class="detail-item">
+                                    <i class="fas fa-wind" style="color: #a5b1c2; margin-right: 6px;"></i>
+                                    <span style="color: var(--text-muted); margin-right: 4px;">Szél:</span>
+
+                                    <i id="wind-arrow" class="fas fa-arrow-up"
+                                        style="color: var(--neon-blue); margin-right: 4px;"></i>
+                                    <span id="wind-detail">-- km/h</span>
+                                </div>
+
+                                <div class="detail-item">
+                                    <i class="fas fa-sun" style="color: #ff9f43; margin-right: 6px;"></i>
+                                    <span style="color: var(--text-muted); margin-right: 4px;">Kel:</span>
+                                    <span id="sunrise-display">--:--</span>
+                                </div>
+
+                                <div class="detail-item">
+                                    <i class="fas fa-sun" style="color: #ee5253; margin-right: 6px;"></i>
+                                    <span style="color: var(--text-muted); margin-right: 4px;">Nyug:</span>
+                                    <span id="sunset-display">--:--</span>
+                                </div>
+
+                                <div class="detail-item" title="Szálló por koncentráció (PM2.5)">
+                                    <i class="fas fa-lungs" style="color: #00b894;"></i>
+                                    <span style="margin-left: 5px;">PM2.5: <span id="aqi-display">--</span></span>
+                                </div>
+
+                                <div class="detail-item">
+                                    <i class="fas fa-mountain" style="color: #a5b1c2;"></i>
+                                    <span style="margin-left: 5px;" id="elevation-display">-- m</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-card" id="map-card-container" style="display:none;">
+                            <h3 class="section-title"><i class="fas fa-map-marked-alt"></i> Helyszín</h3>
+                            <div id="track-map-container">
+                                <div id="track-map"></div>
+                            </div>
+                            <div style="text-align: right; margin-top: 5px;">
+                                <a id="google-maps-link" href="#" target="_blank"
+                                    style="color: var(--neon-blue); font-size: 0.8rem; text-decoration: none;">
+                                    Megnyitás Google Térképen <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="info-card" style="position: sticky; top: 30px;">
+                            <h3 class="section-title" style="justify-content: center;">Értékeld a pályát!</h3>
+
+                            <div class="rating-wrapper">
+                                <div class="stars-container" id="stars-box">
+                                    <div class="star-wrapper" data-index="1"><i class="far fa-star star-empty"></i>
+                                        <div class="star-filled"><i class="fas fa-star"></i></div>
+                                    </div>
+                                    <div class="star-wrapper" data-index="2"><i class="far fa-star star-empty"></i>
+                                        <div class="star-filled"><i class="fas fa-star"></i></div>
+                                    </div>
+                                    <div class="star-wrapper" data-index="3"><i class="far fa-star star-empty"></i>
+                                        <div class="star-filled"><i class="fas fa-star"></i></div>
+                                    </div>
+                                    <div class="star-wrapper" data-index="4"><i class="far fa-star star-empty"></i>
+                                        <div class="star-filled"><i class="fas fa-star"></i></div>
+                                    </div>
+                                    <div class="star-wrapper" data-index="5"><i class="far fa-star star-empty"></i>
+                                        <div class="star-filled"><i class="fas fa-star"></i></div>
+                                    </div>
+                                </div>
+                                <div class="current-rating-display" id="display-rating">0.0</div>
+                            </div>
+
+                            <form style="margin-top: 20px;">
+                                <textarea class="review-input"
+                                    placeholder="Milyen volt a futás? Milyen a burkolat állapota?"></textarea>
+                                <button type="button" class="btn-submit-review"
+                                    onclick="alert('Ez a funkció hamarosan elérhető!')">Vélemény Küldése <i
+                                        class="fas fa-paper-plane"></i></button>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    @keyframes bounce {
+
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+            transform: translateY(0);
+        }
+
+        40% {
+            transform: translateY(-10px);
+        }
+
+        60% {
+            transform: translateY(-5px);
+        }
+    }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://unpkg.com/isotope-layout@3/dist/isotope.pkgd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="/static/js/tracks.js"></script>
+{% endblock %}
