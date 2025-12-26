@@ -303,17 +303,51 @@ function openDetailOverlay(trackId) {
     document.getElementById('stat-surface').textContent = track.surface_type || "Vegyes";
     document.getElementById('stat-open').textContent = track.is_24_7 ? "0-24" : "Változó";
 
-    // 5. Szolgáltatások (Amenities)
+    // --- 5. Szolgáltatások (Amenities) - GRID NÉZET ---
     const amContainer = document.getElementById('detail-amenities');
-    const makeTag = (active, icon, text) =>
-        `<div class="amenity-tag ${active ? 'active' : ''}"><i class="fas ${icon}"></i> ${text}</div>`;
+    
+    // Segédfüggvény a kártya generáláshoz
+    // isAvailable: true/false
+    // icon: FontAwesome class (pl. 'fa-lightbulb')
+    // text: A felirat (pl. 'Világítás')
+    // extraClass: Opcionális extra class (pl. 'free-badge' az ingyeneshez)
+    const createAmenityCard = (isAvailable, icon, text, extraClass = '') => {
+        const statusClass = isAvailable ? `present ${extraClass}` : 'missing';
+        return `
+            <div class="amenity-card ${statusClass}">
+                <i class="fas ${icon}"></i>
+                <span>${text}</span>
+            </div>
+        `;
+    };
 
-    let amHtml = '';
-    amHtml += makeTag(track.has_lighting, 'fa-lightbulb', 'Világítás');
-    amHtml += makeTag(track.is_dog_friendly, 'fa-dog', 'Kutyabarát');
-    amHtml += makeTag(track.has_shower, 'fa-shower', 'Zuhany');
-    amHtml += makeTag(track.has_lockers, 'fa-lock', 'Öltöző');
-    amHtml += makeTag(track.has_parking, 'fa-square-parking', 'Parkoló');
+    let amHtml = '<div class="amenities-grid-modal">';
+
+    // 1. Fizetős / Ingyenes 
+    // Ha track.is_free true -> Ingyenes (Zöld, aktív)
+    // Ha track.is_free false -> Fizetős (Pirosas vagy simán nem ingyenes)
+    // A kérésed szerint: ha "Nincs", akkor is fel kell tüntetni. 
+    // Itt a logikát megfordítjuk vizuálisan: Ha ingyenes -> Aktív, Ha fizetős -> Inaktív "Ingyenes" (vagy fordítva).
+    // A legegyértelműbb: Ha ingyenes, akkor "Ingyenes" (aktív), ha fizetős, akkor "Ingyenes" (áthúzva/inaktív).
+    amHtml += createAmenityCard(track.is_free, 'fa-wallet', 'Ingyenes', 'free-badge');
+
+    // 2. Fény
+    amHtml += createAmenityCard(track.has_lighting, 'fa-lightbulb', 'Világítás');
+
+    // 3. Öltöző
+    amHtml += createAmenityCard(track.has_lockers, 'fa-lock', 'Öltöző');
+
+    // 4. Parkoló
+    amHtml += createAmenityCard(track.has_parking, 'fa-square-parking', 'Parkoló');
+
+    // 5. Zuhany
+    amHtml += createAmenityCard(track.has_shower, 'fa-shower', 'Zuhany');
+
+    // 6. Kutyás
+    amHtml += createAmenityCard(track.is_dog_friendly, 'fa-dog', 'Kutyabarát');
+
+    amHtml += '</div>'; // Grid lezárása
+
     amContainer.innerHTML = amHtml;
 
     // --- 6. KOORDINÁTA ALAPÚ FUNKCIÓK (Térkép + Időjárás) ---
