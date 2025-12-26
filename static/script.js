@@ -219,7 +219,8 @@ function getCookie(name) {
 
 function timeToSeconds(s) {
     if (!s) return 0;
-    const p = s.split(':').map(x => parseInt(x) || 0);
+    // JAVÍTÁS: parseFloat használata parseInt helyett a tizedesek miatt
+    const p = s.split(':').map(x => parseFloat(x) || 0);
     if (p.length === 3) return p[0] * 3600 + p[1] * 60 + p[2];
     if (p.length === 2) return p[0] * 60 + p[1];
     return 0;
