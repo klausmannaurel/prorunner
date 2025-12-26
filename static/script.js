@@ -606,6 +606,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Így a loadResults függvény már látni fogja a 'currentUser'-t
     initTracks();
 });
-
-initTracks();
-checkAuthStatus();
