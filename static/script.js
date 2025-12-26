@@ -227,8 +227,24 @@ function timeToSeconds(s) {
 }
 
 function secondsToTimeStr(s) {
-    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
-    return (h > 0 ? String(h).padStart(2, '0') + ':' : '') + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+
+    // JAVÍTÁS: Másodperc formázása tizedesjegyekkel
+    let secStr;
+    if (sec % 1 === 0) {
+        // Ha egész szám (nincs tizedes)
+        secStr = String(sec).padStart(2, '0');
+    } else {
+        // Ha van tizedes (pl. 28.51), akkor fix 2 tizedesjegy és vezető nulla ha kell
+        secStr = sec.toFixed(2); 
+        if (sec < 10) secStr = "0" + secStr;
+    }
+
+    return (h > 0 ? String(h).padStart(2, '0') + ':' : '') + 
+           String(m).padStart(2, '0') + ':' + 
+           secStr;
 }
 
 function calculateMetrics(sec, dist) {
@@ -497,10 +513,11 @@ async function handleResultSubmit() {
 
     let totalSec = 0, valid = true;
     laps.forEach(t => {
-        if (!t.match(/^\d{1,2}:\d{2}$/) && !t.match(/^\d{1,2}:\d{2}:\d{2}$/)) valid = false;
+        // JAVÍTÁS: A regex most már engedi az opcionális tizedes részt (pl. .51)
+        // Elfogadott: 12:34 vagy 12:34.56 vagy 1:23:45.67
+        if (!t.match(/^\d{1,2}:\d{2}(\.\d+)?$/) && !t.match(/^\d{1,2}:\d{2}:\d{2}(\.\d+)?$/)) valid = false;
         totalSec += timeToSeconds(t);
     });
-    if (!valid) { alert("Hibás formátum (pl. 5:20)!"); return; }
 
     const btn = document.querySelector('#admin-modal .btn-submit');
     const orig = btn.innerHTML;
