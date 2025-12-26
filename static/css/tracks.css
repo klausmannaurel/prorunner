@@ -1,1 +1,672 @@
+/* --- TRACKS.CSS - PÁLYÁK OLDAL SPECIFIKUS STÍLUSOK --- */
 
+/* 1. HÁTTÉR ÉS GÖRGETÉS FELÜLÍRÁSA */
+/* Fontos: A style.css alapból tiltja a görgetést, itt engedélyezzük! */
+body {
+    background-color: var(--bg-dark) !important;
+    color: var(--text-main) !important;
+    font-family: 'Exo 2', sans-serif !important;
+
+    /* Sci-fi rács háttér */
+    background-image:
+        linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px) !important;
+    background-size: 40px 40px !important;
+
+    /* A JAVÍTÁS: */
+    overflow-y: auto !important;
+    /* Engedjük a görgetést */
+    height: auto !important;
+    /* Az oldal nőhet */
+    min-height: 100vh;
+    /* De legalább képernyő magas */
+    display: block !important;
+    /* Flexbox kikapcsolása a body-n ezen az oldalon */
+}
+
+/* --- HÁTTÉR GLOW EFFEKTEK --- */
+.glow-spot {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(100px);
+    z-index: -1;
+    opacity: 0.5;
+    pointer-events: none;
+    animation: pulse-glow 8s infinite alternate;
+}
+
+.spot-1 {
+    width: 600px;
+    height: 600px;
+    background: #2c0056;
+    top: -20%;
+    left: -10%;
+}
+
+.spot-2 {
+    width: 500px;
+    height: 500px;
+    background: #004656;
+    bottom: -10%;
+    right: -10%;
+    animation-delay: 2s;
+}
+
+@keyframes pulse-glow {
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(1.1);
+        opacity: 0.7;
+    }
+}
+
+/* --- TARTALOM KERET --- */
+.tracks-page-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 20px 20px 100px 20px;
+    position: relative;
+    z-index: 1;
+}
+
+/* --- FEJLÉC (HEADER) --- */
+.tracks-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 50px 20px;
+    background: rgba(20, 25, 40, 0.5);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 30px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 50px rgba(0, 243, 255, 0.05);
+}
+
+.tracks-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(0, 243, 255, 0.15) 0%, transparent 50%);
+    animation: rotateHero 15s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes rotateHero {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.tracks-header h2 {
+    position: relative;
+    z-index: 2;
+    font-size: 3rem;
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    margin: 0 0 15px 0;
+    background: linear-gradient(90deg, #ffffff, var(--neon-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.tracks-header p {
+    position: relative;
+    z-index: 2;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+/* --- SZŰRŐ GOMBOK --- */
+.filter-bar {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 50px;
+}
+
+.filter-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    padding: 12px 28px;
+    border-radius: 50px;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-btn:hover {
+    border-color: var(--neon-blue);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+    border-color: transparent;
+    color: #050b14;
+    font-weight: 800;
+    box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
+    transform: scale(1.05);
+}
+
+/* --- GRID SYSTEM MÓDOSÍTÁS ISOTOPE-HOZ (FIXED) --- */
+
+/* 1. KONTÉNER: Az Isotope 'vászna' */
+.container {
+    display: block;
+    /* Grid helyett block */
+    width: 100%;
+    position: relative;
+    /* Kötelező az Isotope-nak */
+    min-height: 100vh;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+/* Clearfix */
+.container::after {
+    content: '';
+    display: block;
+    clear: both;
+}
+
+/* 2. KÁRTYA WRAPPER: Csak a helyfoglalásért felel! */
+/* FONTOS: Innen levettünk minden vizuális effektet és animációt */
+.card-wrapper {
+    display: block;
+    float: left;
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    margin-bottom: 30px;
+    /* Sorok közötti távolság */
+    /* Nincs transition, nincs border-radius, ezt az Isotope békén hagyja */
+}
+
+/* Ha ráviszed az egeret, a wrapper előtérbe kerül, hogy a kiemelkedő kártya ne takaródjon ki */
+.card-wrapper:hover {
+    z-index: 100 !important;
+}
+
+/* 3. RESZPONZÍV OSZLOPOK (3 -> 2 -> 1) */
+
+/* DESKTOP (1200px felett): 3 Oszlop */
+@media (min-width: 1200px) {
+    .card-wrapper {
+        width: 30%;
+        /* 32% * 3 = 96% */
+        margin: 0 0.66% 30px 0.66%;
+        /* Maradék 4% a margókra */
+    }
+}
+
+/* TABLET / LAPTOP (768px - 1199px): 2 Oszlop */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .card-wrapper {
+        width: 48%;
+        /* 48% * 2 = 96% */
+        margin: 0 1% 30px 1%;
+        /* Maradék 4% a margókra */
+    }
+}
+
+/* MOBIL (767px alatt): 1 Oszlop */
+@media (max-width: 767px) {
+    .container {
+        padding: 0 10px;
+    }
+
+    .card-wrapper {
+        width: 100%;
+        margin: 0 0 20px 0;
+        float: none;
+        max-width: 450px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Rejtett elemek kezelése */
+.card-wrapper.hidden {
+    display: none !important;
+}
+
+/* --- 4. BELSŐ KÁRTYA (DESIGN & ANIMÁCIÓ) --- */
+/* Minden látványelemet ide hoztunk át a Wrapper-ről */
+
+.track-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+
+    /* FONTOS: overflow visible, hogy a neon keret kilátszódjon */
+    overflow: visible;
+
+    /* Itt történik a varázslat: A transzformáció itt van, nem a wrapperen */
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+
+/* Hover effekt: Csak a belső kártya mozdul, a wrapper marad a helyén (Isotope boldog) */
+.card-wrapper:hover .track-card {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+/* --- NEON KERET ANIMÁCIÓ --- */
+/* Átmozgatva a .track-card::before-ra */
+.track-card::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    /* Kicsit kijjebb lóg */
+    border-radius: 26px;
+    /* Nagyobb radius */
+    padding: 2px;
+    background: linear-gradient(45deg, transparent, var(--neon-blue), transparent, var(--neon-green), transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: -1;
+    background-size: 200% 200%;
+    pointer-events: none;
+}
+
+.card-wrapper:hover .track-card::before {
+    opacity: 1;
+    animation: border-flow 2s linear infinite;
+}
+
+@keyframes border-flow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* --- FÉNYCSÍK (SHINE) EFFEKT - TELJES KÁRTYA --- */
+
+/* 1. A régi effekt törlése a képről */
+.image-container::after {
+    content: none !important;
+}
+
+/* 2. Az új effekt a teljes kártyán (.track-card) */
+.track-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 100%;
+    height: 100%;
+
+    /* Erősebb fénycsík, hogy a sötét háttéren is látszódjon */
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.4), transparent);
+
+    transform: skewX(-25deg);
+    pointer-events: none; /* Átkattintható legyen a gombok miatt */
+    z-index: 100; /* Minden elem (szöveg, gomb) felett fusson el */
+}
+
+/* Animáció indítása hoverre */
+.card-wrapper:hover .track-card::after {
+    animation: shine-swipe 0.75s ease-in-out;
+}
+
+@keyframes shine-swipe {
+    0% { left: -150%; }
+    100% { left: 150%; }
+}
+
+/* --- SZÜKSÉGES KORREKCIÓK A KÁRTYÁN ÉS A KERETEN --- */
+
+/* Ahhoz, hogy a fénycsík ne folyjon ki a kártyáról, el kell vágni a szélét */
+.track-card {
+    overflow: hidden !important;
+    position: relative; /* Biztos ami biztos */
+}
+
+/* Mivel levágtuk a széleket (overflow: hidden), a neon keretet
+   be kell húzni a kártya szélére, különben nem látszana */
+.track-card::before {
+    /* Eredetileg -2px volt, most 0-ra állítjuk */
+    inset: 0 !important;
+    z-index: 1; /* Legyen a tartalom alatt, de a háttér felett */
+}
+
+/* Kép Alapbeállítások */
+.image-container {
+    width: 100%;
+    height: 200px;
+    border-radius: 16px;
+    overflow: hidden;
+    /* Ez vágja le a fénycsíkot */
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s;
+}
+
+.card-wrapper:hover .card-image {
+    transform: scale(1.15);
+}
+
+/* Badges */
+.badges {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 8px;
+    z-index: 5;
+}
+
+.badge {
+    padding: 5px 12px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+}
+
+.badge.bg-open {
+    background: rgba(57, 255, 20, 0.15);
+    color: var(--neon-green);
+    border: 1px solid var(--neon-green);
+}
+
+.badge.bg-info {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card-title {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    font-style: italic;
+    background: linear-gradient(90deg, #fff, #b3b3b3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.details-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 15px;
+}
+
+.details-row i {
+    color: var(--neon-blue);
+    margin-right: 5px;
+}
+
+/* Szolgáltatás ikonok - Fix 5 oszlop */
+.amenities {
+    display: grid;
+
+    /* EZ A KULCS: Pontosan 5 egyenlő részre osztjuk a helyet */
+    grid-template-columns: repeat(5, 1fr);
+
+    gap: 4px;
+    /* Kicsi hézag, hogy összeérjenek */
+    margin-bottom: 20px;
+}
+
+.amenity-box {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 10px 0;
+    text-align: center;
+    transition: all 0.3s;
+    color: #555;
+}
+
+.amenity-box.active {
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.amenity-box.active:hover {
+    background: rgba(0, 243, 255, 0.1);
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+    transform: translateY(-3px);
+}
+
+.amenity-box i {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.amenity-box span {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+}
+
+/* Gombok */
+.action-bar {
+    display: grid;
+    grid-template-columns: 40px 40px 1fr;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.btn {
+    height: 40px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #fff;
+}
+
+.btn-icon.del:hover {
+    border-color: #ff4757;
+    color: #ff4757;
+    box-shadow: 0 0 10px rgba(255, 71, 87, 0.3);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+    color: #050b14;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-style: italic;
+    font-family: 'Exo 2', sans-serif;
+}
+
+.btn-primary:hover {
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+    letter-spacing: 1px;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    color: var(--neon-blue);
+    font-size: 1.5rem;
+    text-align: center;
+    grid-column: 1/-1;
+}
+
+/* FAB Gomb */
+.fab-btn {
+    background: linear-gradient(135deg, var(--neon-pink), #8b5cf6);
+    box-shadow: 0 0 20px rgba(188, 19, 254, 0.5);
+}
+
+/* --- SCROLLBAR ELREJTÉSE (Esztétika) --- */
+::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: transparent;
+}
+
+html,
+body {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none;
+}
+
+/* --- MODAL (ŰRLAP) --- */
+.modal-card {
+    background: rgba(20, 25, 40, 0.95) !important;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(0, 243, 255, 0.2);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    color: white !important;
+    max-width: 500px;
+    width: 90%;
+}
+
+.modal-header h3 {
+    color: white !important;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.modal-header button i {
+    color: #94a3b8 !important;
+}
+
+.modal-header button:hover i {
+    color: #ff4757 !important;
+}
+
+/* Inputok */
+.form-control,
+.form-group input,
+.form-group select {
+    background-color: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: white !important;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.form-control:focus {
+    border-color: var(--neon-blue) !important;
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+    outline: none;
+}
+
+/* Checkbox Rács */
+.features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.feature-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.feature-checkbox:hover {
+    background-color: rgba(0, 243, 255, 0.1);
+    border-color: var(--neon-blue);
+}
+
+.feature-checkbox span {
+    font-size: 0.9rem;
+    color: #e2e8f0;
+    font-weight: 500;
+}
+
+.feature-checkbox input[type="checkbox"] {
+    accent-color: var(--neon-blue);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.admin-form label {
+    color: #cbd5e1;
+    margin-bottom: 5px;
+    display: block;
+    font-size: 0.9rem;
+}
+
+/* Fájlfeltöltő gomb */
+input[type="file"]::file-selector-button {
+    background: #334155;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+}
