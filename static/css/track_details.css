@@ -1,0 +1,507 @@
+/* --- track_details.css --- */
+/* A track_modal.html stílusai, overlay rendszerbe integrálva */
+
+/* A teljes nézet konténere (alapból rejtve) */
+.track-detail-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000; /* Legyen mind felett */
+    background-color: var(--bg-dark);
+    overflow-y: auto; /* Görgethető legyen */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s;
+}
+
+.track-detail-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* --- 1. PARALLAX HÁTTÉR (Zoom & Gradient) --- */
+.parallax-bg {
+    position: fixed; /* Fixed, hogy görgetésnél maradjon (parallax hatás) */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+
+    background-size: cover;
+    background-position: center;
+
+    /* Zoom animáció */
+    animation: heroZoom 20s infinite alternate ease-in-out;
+    will-change: transform;
+}
+
+/* Ez a réteg csinálja az alsó sötétítést (Gradient Overlay) */
+.parallax-bg::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 90%; /* A kép alsó 90%-át fedi le fokozatosan */
+
+    /* Átlátszóból sötétbe (a --bg-dark változó színére) */
+    background: linear-gradient(to bottom, transparent 0%, var(--bg-dark) 100%);
+
+    z-index: 1;
+    pointer-events: none; /* Átkattintható legyen */
+}
+
+/* Zoom animáció definíciója */
+@keyframes heroZoom {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(1.15); /* 15%-os nagyítás */
+    }
+}
+
+/* --- 2. HERO SZEKCIÓ --- */
+.hero-title-section {
+    height: 70vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    position: relative;
+}
+
+.hero-track-name {
+    font-size: 4rem;
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, #fff, var(--neon-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+    line-height: 1.1;
+}
+
+.hero-badges {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.hero-badge {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--neon-blue);
+    color: #fff;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+}
+
+/* --- 3. A FŐ ADATLAP --- */
+.details-sheet {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 40px 40px 0 0;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 60px 20px;
+    box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.5);
+    min-height: 100vh;
+    position: relative;
+    z-index: 10;
+}
+
+.details-sheet::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    margin-top: 15px;
+}
+
+.content-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 40px;
+}
+
+.info-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 30px;
+    margin-bottom: 30px;
+    transition: transform 0.3s;
+}
+
+.info-card:hover {
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+}
+
+h3.section-title {
+    font-size: 1.8rem;
+    color: var(--neon-blue);
+    margin-top: 0;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+p.track-desc {
+    line-height: 1.8;
+    color: #d1d5db;
+    font-size: 1.1rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.stat-box {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 15px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fff;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.amenity-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.amenity-tag {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid transparent;
+    opacity: 0.5; /* Alapból halvány */
+}
+
+.amenity-tag.active {
+    opacity: 1;
+    border-color: var(--neon-green);
+    color: var(--neon-green);
+    background: rgba(57, 255, 20, 0.05);
+}
+
+/* --- CSILLAGOZÁS --- */
+.rating-wrapper {
+    text-align: center;
+    padding: 20px;
+    position: relative;
+}
+
+.stars-container {
+    display: inline-flex;
+    gap: 15px;
+    cursor: pointer;
+    margin: 20px 0;
+}
+
+.star-wrapper {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    font-size: 45px;
+    transition: transform 0.2s;
+}
+
+.star-wrapper:hover { transform: scale(1.2); }
+.star-wrapper.click-anim { animation: pop 0.3s ease forwards; }
+
+@keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4) rotate(10deg); }
+    100% { transform: scale(1); }
+}
+
+.star-empty { color: rgba(255, 255, 255, 0.1); position: absolute; top: 0; left: 0; width: 100%; z-index: 1; }
+.star-filled {
+    color: var(--neon-gold);
+    position: absolute; top: 0; left: 0; width: 0%; overflow: hidden; z-index: 2;
+    white-space: nowrap; filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
+    transition: width 0.1s ease-out;
+}
+
+.current-rating-display {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--neon-gold);
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+
+textarea.review-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    color: #fff;
+    padding: 15px;
+    border-radius: 15px;
+    resize: vertical;
+    min-height: 100px;
+    margin-top: 15px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.btn-submit-review {
+    background: linear-gradient(135deg, var(--neon-blue), #2980b9);
+    border: none;
+    padding: 12px 30px;
+    border-radius: 50px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-top: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    width: 100%;
+}
+.btn-submit-review:hover { box-shadow: 0 0 25px rgba(0, 243, 255, 0.5); transform: translateY(-2px); }
+
+/* --- MODERN BEZÁRÁS GOMB (JOBB FELÜL - JAVÍTOTT POZÍCIÓ) --- */
+.close-modal-btn {
+    position: fixed;
+
+    /* JAVÍTÁS ITT: */
+    top: 90px; /* 25px helyett 90px, hogy a navbar alá kerüljön */
+    right: 25px;
+    z-index: 3000; /* Megnövelve, hogy biztosan legfelül legyen */
+
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+
+    /* Glassmorphism háttér */
+    background: rgba(0, 0, 0, 0.6); /* Kicsit sötétebb alap a jobb láthatóságért */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    /* Keret és szín */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 1);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    cursor: pointer;
+
+    /* Animációk */
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.close-modal-btn:hover {
+    background: rgba(255, 71, 87, 0.15);
+    border-color: #ff4757;
+    color: #ff4757;
+    transform: rotate(90deg) scale(1.1);
+    box-shadow: 0 0 25px rgba(255, 71, 87, 0.6);
+}
+
+@media (max-width: 900px) {
+    .content-grid { grid-template-columns: 1fr; }
+    .hero-track-name { font-size: 2.5rem; }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+    40% {transform: translateY(-10px);}
+    60% {transform: translateY(-5px);}
+}
+
+/* --- A fájl végére illeszd be --- */
+
+/* TÉRKÉP STÍLUSOK */
+#track-map-container {
+    width: 100%;
+    height: 250px; /* Térkép magassága */
+    border-radius: 15px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    position: relative;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+#track-map {
+    width: 100%;
+    height: 100%;
+    background: #242f3e; /* Sötét háttér betöltésig */
+    z-index: 1;
+}
+
+/* TRÜKK: Dark Mode térkép ingyen!
+   Megfordítjuk a színeket (invert), majd korrigáljuk a színárnyalatot (hue-rotate),
+   hogy ne legyen minden furcsa színű, végül sötétítjük.
+*/
+.leaflet-tile-pane {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+/* Markerek és feliratok visszaállítása, hogy azok ne legyenek invertálva (opcionális) */
+/* Ha szeretnénk, hogy a marker "neon" hatású maradjon, hagyhatjuk így is. */
+
+/* Leaflet vezérlők (zoom gombok) stílusa a témához igazítva */
+.leaflet-control-zoom a {
+    background-color: rgba(20, 25, 40, 0.9) !important;
+    color: var(--neon-blue) !important;
+    border-color: var(--glass-border) !important;
+}
+
+.leaflet-bar a:hover {
+    background-color: var(--neon-blue) !important;
+    color: #000 !important;
+}
+
+/* Copyright szöveg eltüntetése vagy stílusozása (opcionális, de illik megtartani) */
+.leaflet-control-attribution {
+    background: rgba(0,0,0,0.5) !important;
+    color: #aaa !important;
+}
+.leaflet-control-attribution a {
+    color: var(--neon-blue) !important;
+}
+
+/* --- Illeszd a fájl végére --- */
+
+/* IDŐJÁRÁS WIDGET */
+.weather-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.2));
+    border: 1px solid var(--glass-border);
+    padding: 20px !important; /* Kicsit kompaktabb legyen */
+    position: relative;
+    overflow: hidden;
+}
+
+/* Finom háttérfény effekt */
+.weather-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(0, 243, 255, 0.15), transparent 70%);
+    pointer-events: none;
+}
+
+.weather-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.weather-icon-box i {
+    font-size: 3rem;
+    color: var(--neon-blue); /* Alapértelmezett kék */
+    text-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
+    transition: all 0.5s ease;
+}
+
+/* Külön színek az időjárás típusokhoz (JS kapcsolja majd) */
+.weather-icon-box i.sunny { color: #FFD700; text-shadow: 0 0 25px rgba(255, 215, 0, 0.6); }
+.weather-icon-box i.rainy { color: #4facfe; text-shadow: 0 0 20px rgba(79, 172, 254, 0.6); }
+.weather-icon-box i.cloudy { color: #b0c4de; text-shadow: 0 0 15px rgba(176, 196, 222, 0.4); }
+
+.weather-data {
+    text-align: left;
+}
+
+.temp-display {
+    font-size: 2.5rem;
+    font-weight: 900;
+    line-height: 1;
+    font-style: italic;
+    /* Színátmenetes szöveg */
+    background: linear-gradient(to right, #fff, var(--neon-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.wind-display {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* --- Kiegészítő stílusok az IDŐJÁRÁS kártyához --- */
+
+.weather-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Két oszlop */
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem; /* Kisebb betűméret */
+    color: #cbd5e1;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 6px 10px;
+    border-radius: 8px;
+}
+
+.detail-item i {
+    width: 20px; /* Fix szélesség, hogy az ikonok egymás alatt legyenek */
+    text-align: center;
+}
+
+/* Animált megjelenés */
+.weather-card.loaded #weather-extras {
+    opacity: 1 !important;
+}
