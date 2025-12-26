@@ -598,5 +598,14 @@ function getCookie(name) {
 
 window.addNewResult = handleResultSubmit;
 
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Először megvárjuk, hogy a rendszer ellenőrizze, be vagy-e lépve
+    await checkAuthStatus(); 
+    
+    // 2. Csak ezután töltjük be a pályákat és az eredményeket
+    // Így a loadResults függvény már látni fogja a 'currentUser'-t
+    initTracks();
+});
+
 initTracks();
 checkAuthStatus();
