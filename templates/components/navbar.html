@@ -1,1 +1,54 @@
+<nav class="glass-navbar">
+    <div class="nav-container">
+        <a href="/" class="nav-brand">
+            <div class="brand-icon">
+                <i class="fas fa-running"></i>
+            </div>
+            <span class="brand-text">ProRunner</span>
+        </a>
 
+        <div class="nav-menu" id="nav-menu">
+            <ul class="nav-items">
+                <li class="nav-item">
+                    <a href="/" class="nav-link">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/tracks" class="nav-link">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>Pályák</span>
+                    </a>
+                </li>
+            </ul>
+            <div class="mobile-auth-wrapper"></div>
+        </div>
+
+        <div class="nav-actions">
+            
+            {% if user.is_authenticated %}
+                <div id="user-profile-display" class="profile-pill" onclick="logout()">
+                    <div class="avatar-mini" id="user-avatar-initial">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <span class="username-text" id="user-name-text">{{ user.username }}</span>
+                    <i class="fas fa-sign-out-alt logout-icon" title="Kilépés"></i>
+                </div>
+
+            {% else %}
+
+                <div id="login-btn" class="auth-pill" onclick="openLoginModal()">
+                    <i class="fas fa-sign-in-alt"></i> <span>Belépés</span>
+                </div>
+
+            {% endif %}
+
+            <div class="hamburger-toggle" id="hamburger-btn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </div>
+</nav>
