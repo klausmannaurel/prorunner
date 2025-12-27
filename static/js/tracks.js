@@ -75,8 +75,8 @@ function createTrackCard(track) {
     const isAdmin = user && (user.is_staff === true);
     const canEditOrDelete = isOwner || isAdmin;
 
-    const fallbackUrl = 'https://images.unsplash.com/photo-1533560906234-a4b9e38e146c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
-    const imgUrl = track.image ? track.image : fallbackUrl;
+    const fallbackUrl = 'https://images.unsplash.com/photo-1533560906234-a4b9e38e146c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';    
+    const imgUrl = track.image_thumbnail ? track.image_thumbnail : (track.image ? track.image : fallbackUrl);
 
     const div = document.createElement('div');
     div.className = 'card-wrapper';
