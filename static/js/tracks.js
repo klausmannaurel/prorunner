@@ -287,6 +287,8 @@ function openDetailOverlay(trackId) {
     if (!track) return;
 
     const overlay = document.getElementById('full-page-detail');
+    // --- JAVÍTÁS: GÖRGETÉS VISSZAÁLLÍTÁSA ---
+    if (overlay) overlay.scrollTop = 0;
     const fallbackUrl = 'https://images.unsplash.com/photo-1533560906234-a4b9e38e146c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
     const imgUrl = track.image ? track.image : fallbackUrl;
 
@@ -296,15 +298,23 @@ function openDetailOverlay(trackId) {
 
     document.getElementById('detail-hero-name').textContent = track.name;
 
-    // 2. Hero Badges
+    // 2. Hero Badges - MÓDOSÍTOTT
     const badgeContainer = document.getElementById('detail-hero-badges');
-    let badgesHtml = '<div class="hero-badge"><i class="fas fa-check-circle"></i> Nyitva</div>';
+    let badgesHtml = '';
 
-    if (track.is_free) {
-        badgesHtml += '<div class="hero-badge" style="border-color: var(--neon-green); color: var(--neon-green);"><i class="fas fa-wallet"></i> Ingyenes</div>';
+    // 1. BADGE: Nyitvatartás (0-24 vagy Változó)
+    if (track.is_24_7) {
+        badgesHtml += '<div class="hero-badge" style="border-color: var(--neon-blue); color: #fff;"><i class="fas fa-clock"></i> 0-24 Nyitva</div>';
     } else {
-        badgesHtml += '<div class="hero-badge" style="border-color: #ff4757; color: #ff4757;"><i class="fas fa-coins"></i> Fizetős</div>';
+        badgesHtml += '<div class="hero-badge" style="border-color: #f1c40f; color: #f1c40f;"><i class="fas fa-door-open"></i> Nyitvatartás: Változó</div>';
     }
+
+    // 2. BADGE: Borítás típusa (Fizetős/Ingyenes helyett)
+    // Nagy kezdőbetűssé alakítjuk (pl. "rekortan" -> "Rekortan")
+    let surfaceDisplay = track.surface_type ? track.surface_type.charAt(0).toUpperCase() + track.surface_type.slice(1) : 'Vegyes';
+
+    badgesHtml += `<div class="hero-badge" style="border-color: rgba(255,255,255,0.5); color: #ddd;"><i class="fas fa-layer-group"></i> ${surfaceDisplay}</div>`;
+
     badgeContainer.innerHTML = badgesHtml;
 
     // 3. Leírás
@@ -798,3 +808,45 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+// --- EGYEDI SMOOTH SCROLL (OPTIMALIZÁLT) ---
+window.scrollToDetails = function() {
+    const overlay = document.getElementById('full-page-detail');
+    const sheet = document.querySelector('.details-sheet');
+
+    if (!overlay || !sheet) return;
+
+    const duration = 1500; // Marad az 1.5 mp, mert a sebesség tetszett
+    const targetPos = sheet.offsetTop;
+    const startPos = overlay.scrollTop;
+    const distance = targetPos - startPos;
+    let startTime = null;
+
+    function animation(currentTime) {
+        if (startTime === null) startTime = currentTime;
+        const timeElapsed = currentTime - startTime;
+
+        // ÚJ EASING: easeInOutCubic (Még selymesebb mozgás, mint a Quad)
+        const ease = (t, b, c, d) => {
+            t /= d / 2;
+            if (t < 1) return c / 2 * t * t * t + b;
+            t -= 2;
+            return c / 2 * (t * t * t + 2) + b;
+        };
+
+        const nextScroll = ease(timeElapsed, startPos, distance, duration);
+
+        // FONTOS JAVÍTÁS: Math.round() használata
+        // Ez megakadályozza a szub-pixel vibrálást (szaggatást)
+        overlay.scrollTop = Math.round(nextScroll);
+
+        if (timeElapsed < duration) {
+            requestAnimationFrame(animation);
+        } else {
+            // Biztosítjuk, hogy a végén pontosan a célnál álljon meg
+            overlay.scrollTop = targetPos;
+        }
+    }
+
+    requestAnimationFrame(animation);
+};
