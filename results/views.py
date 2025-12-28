@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticate
 from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import Track, Result
 from .serializers import TrackSerializer, ResultSerializer
+from .models import Profile
 
 # --- 1. HTML OLDALAK MEGJELENÍTÉSE ---
 
@@ -102,7 +103,7 @@ class TrackViewSet(viewsets.ModelViewSet):
 
     serializer_class = TrackSerializer
 
-    
+
 
     # Jogosultságok:
 
@@ -377,44 +378,47 @@ def current_user(request):
     return Response({"is_authenticated": False})
 
 
-
 @api_view(['POST'])
-
 def api_register(request):
-
     username = request.data.get('username')
-
     password = request.data.get('password')
-
     full_name = request.data.get('full_name')
 
-
+    # Új mezők kinyerése
+    birth_year = request.data.get('birth_year')
+    gender = request.data.get('gender')
+    weight = request.data.get('weight')
+    height = request.data.get('height')
 
     if not username or not password or not full_name:
-
-        return Response({"message": "Minden mező kitöltése kötelező!"}, status=400)
-
-
+        return Response({"message": "A felhasználónév, jelszó és név kötelező!"}, status=400)
 
     if User.objects.filter(username=username).exists():
-
         return Response({"message": "Ez a felhasználónév már foglalt."}, status=400)
 
-
-
     try:
-
+        # 1. Felhasználó létrehozása
         user = User.objects.create_user(username=username, password=password)
-
         user.first_name = full_name
-
         user.save()
 
+        # 2. Profil létrehozása az extra adatokkal
+        # Figyelünk rá, hogy csak akkor mentsük, ha van adat, és számot várunk
+        Profile.objects.create(
+            user=user,
+            birth_year=int(birth_year) if birth_year else None,
+            gender=gender if gender else None,
+            weight_kg=float(weight) if weight else None,
+            height_cm=int(height) if height else None
+        )
+
         return Response({"message": "Sikeres regisztráció! Most már bejelentkezhetsz."}, status=201)
-
     except Exception as e:
-
+        # Hiba esetén (pl. ha a user létrejött, de a profil nem) érdemes lenne takarítani,
+        # de fejlesztésnél elég, ha látjuk a logot.
+        print(f"Regisztrációs hiba: {e}")
         return Response({"message": "Hiba történt a regisztráció során."}, status=500)
+
 
 @login_required(login_url='home') # Ha nincs belépve, visszaküldi a főoldalra
 def my_results(request):
@@ -424,5 +428,5 @@ def my_results(request):
     # Lekérjük a user eredményeit, dátum szerint csökkenő sorrendben (legújabb elöl)
     # A 'select_related' segít, hogy a pálya adatait (név, hossz) is hatékonyan elérjük
     results = Result.objects.filter(user=request.user).select_related('track').order_by('-date', '-recorded_at')
-    
+
     return render(request, 'my_results.html', {'results': results})
