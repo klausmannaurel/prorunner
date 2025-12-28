@@ -109,7 +109,7 @@
     </div>
 
     <div class="modal-overlay" id="register-modal">
-        <div class="modal-card" style="max-width: 380px;">
+        <div class="modal-card" style="max-width: 450px;">
             <div class="modal-header">
                 <h3>Regisztráció</h3>
                 <button onclick="closeModal('register-modal')"
@@ -117,18 +117,47 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
+
             <div class="form-group">
-                <label>Felhasználónév</label>
+                <label>Felhasználónév *</label>
                 <input type="text" id="reg-username" class="form-control">
             </div>
             <div class="form-group">
-                <label>Teljes Név</label>
+                <label>Teljes Név *</label>
                 <input type="text" id="reg-fullname" class="form-control">
             </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Születési év</label>
+                    <input type="number" id="reg-birthyear" class="form-control" placeholder="1990">
+                </div>
+                <div class="form-group">
+                    <label>Nem</label>
+                    <select id="reg-gender" class="form-control">
+                        <option value="">-- Válassz --</option>
+                        <option value="male">Férfi</option>
+                        <option value="female">Nő</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Testsúly (kg)</label>
+                    <input type="number" id="reg-weight" class="form-control" step="0.1" placeholder="75.5">
+                </div>
+                <div class="form-group">
+                    <label>Magasság (cm)</label>
+                    <input type="number" id="reg-height" class="form-control" placeholder="180">
+                </div>
+            </div>
+
             <div class="form-group">
-                <label>Jelszó</label>
+                <label>Jelszó *</label>
                 <input type="password" id="reg-password" class="form-control">
             </div>
+
             <button class="btn-submit" onclick="performRegister()">Fiók létrehozása</button>
             <div class="modal-footer-link">Már van fiókod? <a onclick="switchToLogin()">Jelentkezz be!</a></div>
         </div>
