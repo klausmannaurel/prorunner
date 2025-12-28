@@ -238,12 +238,12 @@ function secondsToTimeStr(s) {
         secStr = String(sec).padStart(2, '0');
     } else {
         // Ha van tizedes (pl. 28.51), akkor fix 2 tizedesjegy és vezető nulla ha kell
-        secStr = sec.toFixed(2); 
+        secStr = sec.toFixed(2);
         if (sec < 10) secStr = "0" + secStr;
     }
 
-    return (h > 0 ? String(h).padStart(2, '0') + ':' : '') + 
-           String(m).padStart(2, '0') + ':' + 
+    return (h > 0 ? String(h).padStart(2, '0') + ':' : '') +
+           String(m).padStart(2, '0') + ':' +
            secStr;
 }
 
@@ -423,6 +423,7 @@ async function loadResults(trackId) {
 function updateTrackOverlay(trackInfo) {
     const overlay = document.getElementById('track-info-overlay');
     if (!overlay) return;
+
     overlay.style.display = 'flex';
     document.getElementById('overlay-name').textContent = trackInfo.name;
     document.getElementById('overlay-dist').textContent = `${trackInfo.distance_km_per_lap} km`;
@@ -430,16 +431,68 @@ function updateTrackOverlay(trackInfo) {
 
     const featContainer = document.getElementById('overlay-features');
     let featsHTML = '';
-    const makeBadge = (active, icon, text) => `<div class="feature-badge ${active ? 'active' : ''}"><i class="fas ${icon}"></i> ${text}</div>`;
 
-    if (trackInfo.is_free) featsHTML += makeBadge(true, 'fa-hand-holding-dollar', 'Ingyenes');
-    else featsHTML += makeBadge(false, 'fa-coins', 'Fizetős');
-    if (trackInfo.is_24_7) featsHTML += makeBadge(true, 'fa-clock', '0-24');
+    // Segédfüggvény: Keretes jelvény (Badge) - Pozitív dolgoknak
+    const makeBadge = (active, icon, text) =>
+        `<div class="feature-badge ${active ? 'active' : ''}"><i class="fas ${icon}"></i> ${text}</div>`;
+
+    // Segédfüggvény: Keret nélküli figyelmeztető szöveg - Negatív/Figyelmeztető dolgoknak
+    const makeWarningText = (icon, text) =>
+        `<div class="feature-text-warning"><i class="fas ${icon}"></i> ${text}</div>`;
+
+
+    // --- 1. ALAP TULAJDONSÁGOK ---
+
+    // Fizetős / Ingyenes
+    if (trackInfo.is_free) {
+        featsHTML += makeBadge(true, 'fa-hand-holding-dollar', 'Ingyenes');
+    } else {
+        featsHTML += makeWarningText('fa-coins', 'Fizetős');
+    }
+
+    // A többi pozitív tulajdonság (Világítás, Öltöző, stb.)
     if (trackInfo.has_lighting) featsHTML += makeBadge(true, 'fa-lightbulb', 'Világítás');
-    if (trackInfo.has_shower) featsHTML += makeBadge(true, 'fa-shower', 'Zuhany');
     if (trackInfo.has_lockers) featsHTML += makeBadge(true, 'fa-lock', 'Öltöző');
-    if (trackInfo.is_dog_friendly) featsHTML += makeBadge(true, 'fa-dog', 'Kutyabarát');
+    if (trackInfo.has_shower) featsHTML += makeBadge(true, 'fa-shower', 'Zuhany');
     if (trackInfo.has_parking) featsHTML += makeBadge(true, 'fa-square-parking', 'Parkoló');
+    if (trackInfo.is_dog_friendly) featsHTML += makeBadge(true, 'fa-dog', 'Kutyabarát');
+
+
+    // --- 2. EXTRA INFÓK (BKV, WC, Nyitvatartás, Víz) ---
+
+    // MÓDOSÍTÁS ITT: BKV vagy Alternatíva
+    if (trackInfo.has_public_transport) {
+        featsHTML += makeBadge(true, 'fa-bus', 'BKV');
+    } else {
+        // Ha nincs BKV -> Figyelmeztetés
+        featsHTML += makeWarningText('fa-car', 'Kocsi / Gyalog');
+    }
+
+    // WC (Ha van)
+    if (trackInfo.has_toilet) {
+        featsHTML += makeBadge(true, 'fa-restroom', 'WC');
+    }
+
+    // NYITVATARTÁS (Nem 0-24 -> Figyelmeztetés)
+    if (trackInfo.is_24_7) {
+        featsHTML += makeBadge(true, 'fa-clock', '0-24');
+    } else {
+        featsHTML += makeWarningText('fa-clock', 'Nem 0-24');
+    }
+
+    // VÍZVÉTELI LEHETŐSÉG (Nincs víz -> Figyelmeztetés)
+    switch (trackInfo.water_option) {
+        case 'tap':
+            featsHTML += makeBadge(true, 'fa-faucet', 'Ivókút');
+            break;
+        case 'paid':
+            featsHTML += makeBadge(true, 'fa-glass-water', 'Büfé/Bolt');
+            break;
+        case 'none':
+        default:
+            featsHTML += makeWarningText('fa-tint-slash', 'Vizet hozni kell');
+            break;
+    }
 
     featContainer.innerHTML = featsHTML;
 }
@@ -618,8 +671,8 @@ window.addNewResult = handleResultSubmit;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Először megvárjuk, hogy a rendszer ellenőrizze, be vagy-e lépve
-    await checkAuthStatus(); 
-    
+    await checkAuthStatus();
+
     // 2. Csak ezután töltjük be a pályákat és az eredményeket
     // Így a loadResults függvény már látni fogja a 'currentUser'-t
     initTracks();
