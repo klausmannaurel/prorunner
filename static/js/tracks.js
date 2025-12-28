@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Várjuk meg a felhasználót
     await loadCurrentUser();
@@ -75,7 +76,7 @@ function createTrackCard(track) {
     const isAdmin = user && (user.is_staff === true);
     const canEditOrDelete = isOwner || isAdmin;
 
-    const fallbackUrl = 'https://images.unsplash.com/photo-1533560906234-a4b9e38e146c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';    
+    const fallbackUrl = 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
     const imgUrl = track.image_thumbnail ? track.image_thumbnail : (track.image ? track.image : fallbackUrl);
 
     const div = document.createElement('div');
@@ -90,27 +91,46 @@ function createTrackCard(track) {
     if (track.has_lighting) div.classList.add('lighting');
     if (track.is_dog_friendly) div.classList.add('dog');
 
+    // --- VÍZ LOGIKA ---
+    let waterHtml = '';
+    if (track.water_option === 'tap') {
+        waterHtml = `<div class="amenity-box active"><i class="fas fa-faucet"></i><span>Ivókút</span></div>`;
+    } else if (track.water_option === 'paid') {
+        waterHtml = `<div class="amenity-box active"><i class="fas fa-shop"></i><span>Büfé</span></div>`;
+    }
+
     div.innerHTML = `
         <div class="track-card">
             <div class="image-container">
                 <img src="${imgUrl}" alt="${track.name}" class="card-image" onerror="this.onerror=null; this.src='${fallbackUrl}';">
+
                 <div class="badges">
-                    ${track.is_free ? '<span class="badge bg-info">Ingyenes</span>' : '<span class="badge bg-closed">Fizetős</span>'}
-                    <span class="badge bg-open">Nyitva</span>
-                </div>
+                    </div>
             </div>
+
             <h2 class="card-title">${track.name}</h2>
+
             <div class="details-row">
                 <span class="detail-item"><i class="fas fa-route"></i> ${track.distance_km_per_lap} km</span>
                 <span class="detail-item"><i class="fas fa-layer-group"></i> ${track.surface_type || 'Egyéb'}</span>
             </div>
+
             <div class="amenities">
-                 <div class="amenity-box ${track.has_lighting ? 'active' : 'inactive'}"><i class="fas fa-lightbulb"></i><span>Fény</span></div>
-                 <div class="amenity-box ${track.has_lockers ? 'active' : 'inactive'}"><i class="fas fa-lock"></i><span>Öltöző</span></div>
-                 <div class="amenity-box ${track.has_parking ? 'active' : 'inactive'}"><i class="fas fa-square-parking"></i><span>Parkoló</span></div>
-                 <div class="amenity-box ${track.has_shower ? 'active' : 'inactive'}"><i class="fas fa-shower"></i><span>Zuhany</span></div>
-                 <div class="amenity-box ${track.is_dog_friendly ? 'active' : 'inactive'}"><i class="fas fa-dog"></i><span>Kutyás</span></div>
+                 ${track.is_free ? `<div class="amenity-box active"><i class="fas fa-wallet"></i><span>Ingyenes</span></div>` : ''}
+
+                 ${track.has_lighting ? `<div class="amenity-box active"><i class="fas fa-lightbulb"></i><span>Fény</span></div>` : ''}
+                 ${track.has_lockers ? `<div class="amenity-box active"><i class="fas fa-lock"></i><span>Öltöző</span></div>` : ''}
+                 ${track.has_parking ? `<div class="amenity-box active"><i class="fas fa-square-parking"></i><span>Parkoló</span></div>` : ''}
+                 ${track.has_shower ? `<div class="amenity-box active"><i class="fas fa-shower"></i><span>Zuhany</span></div>` : ''}
+                 ${track.is_dog_friendly ? `<div class="amenity-box active"><i class="fas fa-dog"></i><span>Kutyás</span></div>` : ''}
+
+                 ${track.has_toilet ? `<div class="amenity-box active"><i class="fas fa-restroom"></i><span>WC</span></div>` : ''}
+                 ${track.has_public_transport ? `<div class="amenity-box active"><i class="fas fa-bus"></i><span>BKV</span></div>` : ''}
+                 ${track.is_24_7 ? `<div class="amenity-box active"><i class="fas fa-clock"></i><span>0-24</span></div>` : ''}
+
+                 ${waterHtml}
             </div>
+
             <div class="action-bar">
                 ${canEditOrDelete ? `
                     <button class="btn btn-icon btn-edit-track" data-track-id="${track.id}"><i class="fas fa-pen"></i></button>
@@ -123,7 +143,6 @@ function createTrackCard(track) {
     `;
     return div;
 }
-
 
 // --- IDŐJÁRÁS KEZELÉS (Open-Meteo) ---
 
@@ -305,7 +324,7 @@ function openDetailOverlay(trackId) {
 
     // --- 5. Szolgáltatások (Amenities) - GRID NÉZET ---
     const amContainer = document.getElementById('detail-amenities');
-    
+
     // Segédfüggvény a kártya generáláshoz
     // isAvailable: true/false
     // icon: FontAwesome class (pl. 'fa-lightbulb')
@@ -323,10 +342,10 @@ function openDetailOverlay(trackId) {
 
     let amHtml = '<div class="amenities-grid-modal">';
 
-    // 1. Fizetős / Ingyenes 
+    // 1. Fizetős / Ingyenes
     // Ha track.is_free true -> Ingyenes (Zöld, aktív)
     // Ha track.is_free false -> Fizetős (Pirosas vagy simán nem ingyenes)
-    // A kérésed szerint: ha "Nincs", akkor is fel kell tüntetni. 
+    // A kérésed szerint: ha "Nincs", akkor is fel kell tüntetni.
     // Itt a logikát megfordítjuk vizuálisan: Ha ingyenes -> Aktív, Ha fizetős -> Inaktív "Ingyenes" (vagy fordítva).
     // A legegyértelműbb: Ha ingyenes, akkor "Ingyenes" (aktív), ha fizetős, akkor "Ingyenes" (áthúzva/inaktív).
     amHtml += createAmenityCard(track.is_free, 'fa-wallet', 'Ingyenes', 'free-badge');
@@ -345,6 +364,26 @@ function openDetailOverlay(trackId) {
 
     // 6. Kutyás
     amHtml += createAmenityCard(track.is_dog_friendly, 'fa-dog', 'Kutyabarát');
+
+    // 7. WC
+    amHtml += createAmenityCard(track.has_toilet, 'fa-restroom', 'WC');
+
+    // 8. BKV / Tömegközlekedés
+    amHtml += createAmenityCard(track.has_public_transport, 'fa-bus', 'BKV-val elérhető');
+
+    // 9. 0-24 Nyitva
+    amHtml += createAmenityCard(track.is_24_7, 'fa-clock', '0-24 Nyitva');
+    // ----------------------------------
+
+    // 10. VÍZ / BÜFÉ LOGIKA
+    if (track.water_option === 'tap') {
+        amHtml += createAmenityCard(true, 'fa-faucet', 'Ingyenes Ivókút');
+    } else if (track.water_option === 'paid') {
+        amHtml += createAmenityCard(true, 'fa-shop', 'Büfé / Bolt');
+    } else {
+        // Ha nincs víz (inaktív)
+        amHtml += createAmenityCard(false, 'fa-faucet', 'Nincs víz');
+    }
 
     amHtml += '</div>'; // Grid lezárása
 
@@ -523,6 +562,7 @@ function setupEditListeners() {
 
 // --- ADMIN MODAL FÜGGVÉNYEK ---
 function openTrackModal() {
+    // Mezők törlése
     document.getElementById('new-track-name').value = "";
     document.getElementById('new-track-dist').value = "";
     document.getElementById('new-track-lat').value = "";
@@ -530,12 +570,20 @@ function openTrackModal() {
     document.getElementById('new-track-img').value = "";
     document.getElementById('new-track-surface').selectedIndex = 0;
 
+    // Checkboxok alaphelyzetbe állítása
     document.getElementById('check-free').checked = true;
     document.getElementById('check-lighting').checked = false;
     document.getElementById('check-dog').checked = false;
     document.getElementById('check-shower').checked = false;
     document.getElementById('check-parking').checked = false;
     document.getElementById('check-lockers').checked = false;
+
+    // --- ÚJ MEZŐK RESETELÉSE ---
+    document.getElementById('check-toilet').checked = false;
+    document.getElementById('check-transport').checked = true; // BKV legyen alapból pipa? Ha nem, írd át false-ra.
+    document.getElementById('check-24-7').checked = true;      // 0-24 legyen alapból pipa
+    document.getElementById('water-option').value = 'none';
+    // ----------------------------
 
     const modalTitle = document.getElementById('modal-title');
     if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-map-marker-alt" style="color: var(--neon-blue);"></i> Új Pálya';
@@ -555,11 +603,13 @@ window.closeModal = function(id) {
     if(el) el.classList.remove('active');
 }
 
+// static/js/tracks.js
+
 async function openEditModal(trackId) {
     const track = allTracksData.find(t => t.id === trackId);
     if (!track) { alert("Hiba: A pálya adatai nem találhatók!"); return; }
 
-    openTrackModal();
+    openTrackModal(); // Reseteli az űrlapot
 
     document.getElementById('modal-title').innerText = `Pálya módosítása: ${track.name}`;
     document.getElementById('new-track-name').value = track.name;
@@ -570,12 +620,26 @@ async function openEditModal(trackId) {
     const surfaceSelect = document.getElementById('new-track-surface');
     if (surfaceSelect) surfaceSelect.value = track.surface_type;
 
+    // Checkboxok betöltése
     document.getElementById('check-free').checked = track.is_free;
     document.getElementById('check-lighting').checked = track.has_lighting;
     document.getElementById('check-dog').checked = track.is_dog_friendly;
     document.getElementById('check-shower').checked = track.has_shower;
     document.getElementById('check-parking').checked = track.has_parking;
     document.getElementById('check-lockers').checked = track.has_lockers;
+
+    // --- HIÁNYZÓ SOROK PÓTLÁSA ---
+    document.getElementById('check-toilet').checked = track.has_toilet;
+    document.getElementById('check-transport').checked = track.has_public_transport;
+
+    // EZ A SOR HIÁNYZOTT (ezért nem volt pipa, pedig 0-24-es):
+    document.getElementById('check-24-7').checked = track.is_24_7;
+
+    const waterSelect = document.getElementById('water-option');
+    if(waterSelect) waterSelect.value = track.water_option;
+
+    const fileInput = document.getElementById('new-track-img');
+    if (fileInput) fileInput.value = ""; // Fájl inputot nem lehet JS-ből beállítani, csak törölni
 
     const submitButton = document.querySelector('#track-modal .btn-submit');
     if (submitButton) {
@@ -615,16 +679,22 @@ async function saveNewTrack() {
     formData.append('surface_type', surfaceCode);
     formData.append('lat', parseFloat(lat));
     formData.append('lon', parseFloat(lon));
+
+    // Checkboxok
     formData.append('is_free', document.getElementById('check-free').checked);
     formData.append('has_lighting', document.getElementById('check-lighting').checked);
     formData.append('is_dog_friendly', document.getElementById('check-dog').checked);
     formData.append('has_shower', document.getElementById('check-shower').checked);
     formData.append('has_parking', document.getElementById('check-parking').checked);
     formData.append('has_lockers', document.getElementById('check-lockers').checked);
-    formData.append('is_24_7', 'true');
-    formData.append('has_toilet', 'false');
-    formData.append('has_public_transport', 'true');
-    formData.append('water_option', 'none');
+
+    // --- FRISSÍTVE: 0-24 nyitvatartás checkboxból ---
+    formData.append('is_24_7', document.getElementById('check-24-7').checked);
+
+    // Új mezők
+    formData.append('has_toilet', document.getElementById('check-toilet').checked);
+    formData.append('has_public_transport', document.getElementById('check-transport').checked);
+    formData.append('water_option', document.getElementById('water-option').value);
 
     if (fileInput.files.length > 0) formData.append('image', fileInput.files[0]);
 
@@ -665,16 +735,22 @@ async function saveEditedTrack(trackId) {
     formData.append('surface_type', surfaceCode);
     formData.append('lat', parseFloat(lat));
     formData.append('lon', parseFloat(lon));
+
+    // Checkboxok
     formData.append('is_free', document.getElementById('check-free').checked);
     formData.append('has_lighting', document.getElementById('check-lighting').checked);
     formData.append('is_dog_friendly', document.getElementById('check-dog').checked);
     formData.append('has_shower', document.getElementById('check-shower').checked);
     formData.append('has_parking', document.getElementById('check-parking').checked);
     formData.append('has_lockers', document.getElementById('check-lockers').checked);
-    formData.append('is_24_7', 'true');
-    formData.append('has_toilet', 'false');
-    formData.append('has_public_transport', 'true');
-    formData.append('water_option', 'none');
+
+    // --- FRISSÍTVE: 0-24 nyitvatartás checkboxból ---
+    formData.append('is_24_7', document.getElementById('check-24-7').checked);
+
+    // Új mezők
+    formData.append('has_toilet', document.getElementById('check-toilet').checked);
+    formData.append('has_public_transport', document.getElementById('check-transport').checked);
+    formData.append('water_option', document.getElementById('water-option').value);
 
     if (fileInput.files.length > 0) formData.append('image', fileInput.files[0]);
 
