@@ -475,6 +475,29 @@ select#track-select option {
     border: 1px solid var(--neon-blue);
 }
 
+/* --- ÚJ: Keret nélküli figyelmeztető feliratok a Dashboard térképhez --- */
+.feature-text-warning {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    /* Nincs háttér és nincs keret */
+    background: transparent;
+    border: none;
+    /* Figyelemfelkeltő szín (pl. narancs/borostyán), hogy elüssön a többitől */
+    color: var(--neon-orange);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Ha esetleg az ikon színét külön akarjuk állítani */
+.feature-text-warning i {
+    color: var(--neon-orange);
+    opacity: 0.8;
+}
+
 /* --- MODALOK (ŰRLAPOK) --- */
 .modal-overlay {
     position: fixed;
