@@ -73,18 +73,40 @@ async function performLogin() {
     }
 }
 
+// static/script.js
+
 async function performRegister() {
     const u = document.getElementById('reg-username').value;
     const f = document.getElementById('reg-fullname').value;
     const p = document.getElementById('reg-password').value;
 
-    if (!u || !f || !p) { alert("Minden mezőt tölts ki!"); return; }
+    // Új mezők
+    const by = document.getElementById('reg-birthyear').value;
+    const g = document.getElementById('reg-gender').value;
+    const w = document.getElementById('reg-weight').value;
+    const h = document.getElementById('reg-height').value;
+
+    if (!u || !f || !p) {
+        alert("A felhasználónév, név és jelszó kötelező!");
+        return;
+    }
+
+    // Payload összeállítása
+    const payload = {
+        username: u,
+        full_name: f,
+        password: p,
+        birth_year: by,
+        gender: g,
+        weight: w,
+        height: h
+    };
 
     try {
         const response = await fetch('/api/register/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-            body: JSON.stringify({ username: u, full_name: f, password: p })
+            body: JSON.stringify(payload)
         });
         const data = await response.json();
         if (response.ok) {
@@ -94,7 +116,8 @@ async function performRegister() {
             alert(data.message);
         }
     } catch (err) {
-        alert('Hiba történt.');
+        alert('Hiba történt a kommunikációban.');
+        console.error(err);
     }
 }
 
