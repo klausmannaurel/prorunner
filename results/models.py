@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # --- EZEK AZ ÚJ IMPORTOK KELLENEK A KÉPFELDOLGOZÁSHOZ ---
 from PIL import Image
@@ -28,7 +30,7 @@ class Track(models.Model):
 
     # EREDETI (NAGY) KÉP
     image = models.ImageField(upload_to='track_images/', blank=True, null=True, verbose_name="Pálya fotó")
-    
+
     # --- ÚJ MEZŐ: KICSI KÉP (Thumbnail) ---
     image_thumbnail = models.ImageField(upload_to='track_images/thumbs/', blank=True, null=True, verbose_name="Kicsi kép")
 
@@ -64,27 +66,27 @@ class Track(models.Model):
         if self.image:
             # Megnyitjuk a nagy képet a PIL könyvtárral
             img = Image.open(self.image)
-            
+
             # Ha szükséges, konvertáljuk RGB-be (pl. PNG esetén az átlátszóság miatt)
             if img.mode in ("RGBA", "P"):
                 img = img.convert("RGB")
-            
+
             # Átméretezzük (thumbnail metódus megtartja az arányokat!)
             # 400x400 pixel lesz a maximum méret (elég a kártyákhoz)
             img.thumbnail((400, 400))
-            
+
             # Mentés memóriába (BytesIO)
             thumb_io = BytesIO()
             img.save(thumb_io, format='JPEG', quality=85)
-            
+
             # Fájlnév generálása a thumbnailhez
             thumb_filename = os.path.basename(self.image.name).split('.')[0] + '_thumb.jpg'
-            
+
             # Fontos: A save paraméterben False-t adunk meg, hogy ne kerüljünk végtelen ciklusba!
-            # De mivel itt a save() elején vagyunk, és a mezőhöz rendeljük hozzá, 
+            # De mivel itt a save() elején vagyunk, és a mezőhöz rendeljük hozzá,
             # a Django FileField mechanizmusa kezeli.
             # A legjobb módszer: ellenőrizni, hogy változott-e, de egyszerűsítve:
-            
+
             # Csak akkor mentjük el a thumbnailt, ha még nincs, vagy ha az image mező változott.
             # (Egyszerűsített megoldás: mindig legeneráljuk, ha mentés van és nincs thumbnail)
             if not self.image_thumbnail:
@@ -108,3 +110,25 @@ class Result(models.Model):
 
     def __str__(self):
         return f"{self.runner_name} - {self.time} ({self.track.name})"
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    birth_year = models.IntegerField(null=True, blank=True, verbose_name="Születési év")
+    gender = models.CharField(
+        max_length=10,
+        choices=[('male', 'Férfi'), ('female', 'Nő'), ('other', 'Egyéb')],
+        null=True, blank=True, verbose_name="Nem"
+    )
+    weight_kg = models.FloatField(null=True, blank=True, verbose_name="Testsúly (kg)")
+    height_cm = models.IntegerField(null=True, blank=True, verbose_name="Magasság (cm)")
+
+    def __str__(self):
+        return f"{self.user.username} profilja"
+
+    @property
+    def bmi(self):
+        """BMI számítás: kg / (m * m)"""
+        if self.weight_kg and self.height_cm:
+            height_m = self.height_cm / 100
+            return round(self.weight_kg / (height_m ** 2), 1)
+        return None
