@@ -75,6 +75,7 @@
     text-align: center;
     text-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
     position: relative;
+    padding-top: 400px;
 }
 
 .hero-track-name {
@@ -570,7 +571,7 @@ textarea.review-input {
     letter-spacing: 1px;
 }
 
-/* --- Kiegészítő stílusok az IDŐJÁRÁS kártyához --- */
+/* --- Kiegészítő stílusok az IDŐJÁRÁS kártyához --- *
 
 .weather-details-grid {
     display: grid;
