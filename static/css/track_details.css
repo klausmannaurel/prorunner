@@ -161,7 +161,7 @@
 .info-card:hover {
     border-color: var(--neon-blue);
     box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
-    transform: translateY(-5px);    
+    transform: translateY(-5px);
 }
 
 h3.section-title {
@@ -572,7 +572,7 @@ textarea.review-input {
     letter-spacing: 1px;
 }
 
-/* --- Kiegészítő stílusok az IDŐJÁRÁS kártyához --- *
+/* --- Kiegészítő stílusok az IDŐJÁRÁS kártyához --- */
 
 .weather-details-grid {
     display: grid;
