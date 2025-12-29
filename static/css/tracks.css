@@ -35,35 +35,6 @@ body {
     animation: pulse-glow 8s infinite alternate;
 }
 
-.spot-1 {
-    width: 600px;
-    height: 600px;
-    background: #2c0056;
-    top: -20%;
-    left: -10%;
-}
-
-.spot-2 {
-    width: 500px;
-    height: 500px;
-    background: #004656;
-    bottom: -10%;
-    right: -10%;
-    animation-delay: 2s;
-}
-
-@keyframes pulse-glow {
-    0% {
-        transform: scale(1);
-        opacity: 0.5;
-    }
-
-    100% {
-        transform: scale(1.1);
-        opacity: 0.7;
-    }
-}
-
 /* --- TARTALOM KERET --- */
 .tracks-page-container {
     max-width: 1300px;
@@ -211,30 +182,27 @@ body {
     z-index: 100 !important;
 }
 
-/* 3. RESZPONZÍV OSZLOPOK (3 -> 2 -> 1) */
+/* --- 3. RESZPONZÍV OSZLOPOK (3 -> 2 -> 1) --- */
 
 /* DESKTOP (1200px felett): 3 Oszlop */
 @media (min-width: 1200px) {
     .card-wrapper {
-        width: 30%;
-        /* 32% * 3 = 96% */
-        margin: 0 0.66% 30px 0.66%;
-        /* Maradék 4% a margókra */
+        width: 30%; /* 33.3% helyett kicsit kevesebb */
+        margin: 0 1.1% 30px 1.1%; /* Maradék a margókra */
     }
 }
 
-/* TABLET / LAPTOP (768px - 1199px): 2 Oszlop */
-@media (min-width: 768px) and (max-width: 1199px) {
+/* LAPTOP / TABLET (700px - 1199px): 2 Oszlop */
+/* Kibővítettem a tartományt lefelé 768-ról 700-ra, hogy hamarabb váltson */
+@media (min-width: 700px) and (max-width: 1199px) {
     .card-wrapper {
-        width: 48%;
-        /* 48% * 2 = 96% */
-        margin: 0 1% 30px 1%;
-        /* Maradék 4% a margókra */
+        width: 45%; /* 48-50% helyett biztonsági tartalék */
+        margin: 0 1.5% 30px 1.5%; /* Így biztosan nem csúszik le */
     }
 }
 
-/* MOBIL (767px alatt): 1 Oszlop */
-@media (max-width: 767px) {
+/* MOBIL (699px alatt): 1 Oszlop */
+@media (max-width: 699px) {
     .container {
         padding: 0 10px;
     }
@@ -450,27 +418,45 @@ body {
     margin-right: 5px;
 }
 
-/* Szolgáltatás ikonok - Fix 5 oszlop */
+/* --- KOMPAKT SZOLGÁLTATÁS IKONOK --- */
+
 .amenities {
     display: grid;
-
-    /* EZ A KULCS: Pontosan 5 egyenlő részre osztjuk a helyet */
+    /* Marad az 5 oszlop */
     grid-template-columns: repeat(5, 1fr);
 
-    gap: 4px;
-    /* Kicsi hézag, hogy összeérjenek */
-    margin-bottom: 20px;
+    /* Kisebb hézag a dobozok között (4px -> 3px) */
+    gap: 3px;
+
+    /* Kisebb alsó margó, hogy a gombok feljebb kerüljenek */
+    margin-bottom: 15px;
+
+    /* TRÜKK: Fix minimális magasság beállítása!
+       Így ha egy pályának kevés ikonja van, akkor is ugyanakkora helyet foglal,
+       mint amelyiknek sok. Ez kb. 2 sornyi magasság. */
+    min-height: 82px;
+    align-content: start; /* Hogy a kevés ikon felülre kerüljön */
 }
 
 .amenity-box {
     background: rgba(255, 255, 255, 0.03);
-    border-radius: 12px;
-    padding: 10px 0;
+    border-radius: 8px; /* Kisebb lekerekítés (12px helyett) */
+
+    /* Jelentősen csökkentett belső margó (10px -> 5px) */
+    padding: 6px 2px;
+
     text-align: center;
     transition: all 0.3s;
     color: #555;
+
+    /* Flexbox a tökéletes középhez */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
+/* Aktív doboz stílusa marad, csak a méretek változnak */
 .amenity-box.active {
     color: #fff;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -479,19 +465,27 @@ body {
 .amenity-box.active:hover {
     background: rgba(0, 243, 255, 0.1);
     border-color: var(--neon-blue);
-    box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
-    transform: translateY(-3px);
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); /* Kisebb glow */
+    transform: translateY(-2px);
 }
 
+/* IKON MÉRET CSÖKKENTÉSE */
 .amenity-box i {
-    font-size: 1.1rem;
-    margin-bottom: 5px;
+    font-size: 0.9rem; /* 1.1rem helyett kb. 20%-kal kisebb */
+    margin-bottom: 3px; /* Kisebb térköz a szöveg és ikon között */
     display: block;
 }
 
+/* SZÖVEG MÉRET CSÖKKENTÉSE */
 .amenity-box span {
-    font-size: 0.6rem;
+    font-size: 0.55rem; /* 0.6rem helyett */
     text-transform: uppercase;
+    line-height: 1.1; /* Sűrűbb sorköz */
+    letter-spacing: 0px; /* Helytakarékosság */
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; /* Hogy ne törjön több sorba a szöveg */
 }
 
 /* Gombok */
@@ -530,18 +524,30 @@ body {
     box-shadow: 0 0 10px rgba(255, 71, 87, 0.3);
 }
 
+/* --- GOMBOK --- */
+
 .btn-primary {
-    background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
-    color: #050b14;
+    /* ALAP ÁLLAPOT: Átlátszó háttér, csak keret */
+    background: transparent;
+    border: 1px solid var(--neon-green);
+    color: var(--neon-green);
+
     font-weight: 800;
     text-transform: uppercase;
     font-style: italic;
     font-family: 'Exo 2', sans-serif;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Finomabb átmenet */
 }
 
 .btn-primary:hover {
-    box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+    /* HOVER ÁLLAPOT: Teli zöld, sötét szöveggel */
+    background: var(--neon-green);
+    color: #050b14;
+
+    box-shadow: 0 0 25px rgba(57, 255, 20, 0.5); /* Erősebb glow */
+    transform: translateY(-2px); /* Kicsit megemelkedik */
     letter-spacing: 1px;
+    border-color: var(--neon-green);
 }
 
 /* Loading spinner */
