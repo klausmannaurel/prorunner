@@ -12,11 +12,11 @@ router.register(r'tracks', views.TrackViewSet, basename='track')
 urlpatterns = [
     # Admin felület
     path('admin/', admin.site.urls),
-    
+
     path('stopwatch/', views.stopwatch, name='stopwatch'),
 
     # --- HTML OLDALAK ---
-    
+
     # 1. FŐOLDAL: A Landing Page (index.html)
     path('', views.home, name='home'),
 
@@ -26,6 +26,7 @@ urlpatterns = [
     # 3. ÚJ: SAJÁT EREDMÉNYEK (my_results.html)
     # Ez köti össze a /my-results/ URL-t a views.py-ban lévő my_results függvénnyel
     path('my-results/', views.my_results, name='my_results'),
+    path('results/runner/<str:runner_name>/', views.runner_results, name='runner_results'),
 
     # 4. PÁLYÁK: A kártyás lista (tracks.html)
     path('tracks/', views.tracks, name='tracks'),
