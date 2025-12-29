@@ -68,6 +68,7 @@ async function loadTracks() {
 }
 
 // --- KÁRTYA GENERÁLÁS ---
+
 function createTrackCard(track) {
     // A globális változót olvassuk ki
     const user = window.currentUser;
@@ -78,6 +79,35 @@ function createTrackCard(track) {
 
     const fallbackUrl = 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
     const imgUrl = track.image_thumbnail ? track.image_thumbnail : (track.image ? track.image : fallbackUrl);
+
+    // --- ÉRTÉKELÉS LOGIKA ---
+    const rawAvg = track.average_rating ? parseFloat(track.average_rating) : 0;
+    const roundedAvg = Math.round(rawAvg * 2) / 2;
+    const countVal = track.review_count || 0;
+
+    // Szöveges megjelenítés (pl. "3.7")
+    const ratingText = track.average_rating ? parseFloat(track.average_rating).toFixed(1) : "-";
+
+    // --- HELYTAKARÉKOS CSILLAGOK ---
+    const starStyle = 'margin-right: -2px; font-size: 0.7rem;';
+
+    let starsHtml = '';
+    if (countVal > 0) {
+        for (let i = 1; i <= 5; i++) {
+            if (roundedAvg >= i) {
+                starsHtml += `<i class="fas fa-star" style="color:#FFD700; ${starStyle}"></i>`;
+            } else if (roundedAvg >= i - 0.5) {
+                starsHtml += `<i class="fas fa-star-half-alt" style="color:#FFD700; ${starStyle}"></i>`;
+            } else {
+                starsHtml += `<i class="far fa-star" style="color:#555; ${starStyle}"></i>`;
+            }
+        }
+    } else {
+        starsHtml = `<i class="far fa-star" style="color:#444; ${starStyle}"></i>`;
+    }
+
+    const textColor = countVal > 0 ? '#fff' : '#64748b';
+    // ------------------------------------------------
 
     const div = document.createElement('div');
     div.className = 'card-wrapper';
@@ -103,31 +133,38 @@ function createTrackCard(track) {
         <div class="track-card">
             <div class="image-container">
                 <img src="${imgUrl}" alt="${track.name}" class="card-image" onerror="this.onerror=null; this.src='${fallbackUrl}';">
-
-                <div class="badges">
-                    </div>
+                <div class="badges"></div>
             </div>
 
             <h2 class="card-title">${track.name}</h2>
 
-            <div class="details-row">
-                <span class="detail-item"><i class="fas fa-route"></i> ${track.distance_km_per_lap} km</span>
-                <span class="detail-item"><i class="fas fa-layer-group"></i> ${track.surface_type || 'Egyéb'}</span>
-            </div>
+            <div class="details-row" style="margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: nowrap; font-size: 0.75rem;">
 
+                <span class="detail-item" style="white-space: nowrap; flex-shrink: 0;">
+                    <i class="fas fa-route" style="color:var(--neon-blue); font-size: 0.7rem; margin-right: 2px;"></i>${track.distance_km_per_lap} km
+                </span>
+
+                <span class="detail-item" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; text-align: center; color: #cbd5e1; letter-spacing: -0.2px;">
+                    ${track.surface_type || 'Egyéb'}
+                </span>
+
+                <span class="detail-item" style="display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;">
+                     <span style="display:flex;">${starsHtml}</span>
+                     <span style="color: ${textColor}; font-weight: bold; margin-left: 3px;">${ratingText}</span>
+                     <span style="color: #64748b; font-size: 0.7rem; margin-left: 1px;">(${countVal})</span>
+                </span>
+
+            </div>
             <div class="amenities">
                  ${track.is_free ? `<div class="amenity-box active"><i class="fas fa-wallet"></i><span>Ingyenes</span></div>` : ''}
-
                  ${track.has_lighting ? `<div class="amenity-box active"><i class="fas fa-lightbulb"></i><span>Fény</span></div>` : ''}
                  ${track.has_lockers ? `<div class="amenity-box active"><i class="fas fa-lock"></i><span>Öltöző</span></div>` : ''}
                  ${track.has_parking ? `<div class="amenity-box active"><i class="fas fa-square-parking"></i><span>Parkoló</span></div>` : ''}
                  ${track.has_shower ? `<div class="amenity-box active"><i class="fas fa-shower"></i><span>Zuhany</span></div>` : ''}
                  ${track.is_dog_friendly ? `<div class="amenity-box active"><i class="fas fa-dog"></i><span>Kutyás</span></div>` : ''}
-
                  ${track.has_toilet ? `<div class="amenity-box active"><i class="fas fa-restroom"></i><span>WC</span></div>` : ''}
                  ${track.has_public_transport ? `<div class="amenity-box active"><i class="fas fa-bus"></i><span>BKV</span></div>` : ''}
                  ${track.is_24_7 ? `<div class="amenity-box active"><i class="fas fa-clock"></i><span>0-24</span></div>` : ''}
-
                  ${waterHtml}
             </div>
 
@@ -283,8 +320,14 @@ async function loadWeather(lat, lon) {
 // ==========================================================
 
 function openDetailOverlay(trackId) {
+    // 1. ELŐSZÖR megkeressük a pályát
     const track = allTracksData.find(t => t.id === trackId);
+
+    // 2. Ha nincs meg, kilépünk (ez a biztonsági ellenőrzés)
     if (!track) return;
+
+    // 3. CSAK EZUTÁN mentjük el globálisan az ID-t, amikor a 'track' már létezik!
+    window.currentDetailTrackId = track.id;
 
     const overlay = document.getElementById('full-page-detail');
     // --- JAVÍTÁS: GÖRGETÉS VISSZAÁLLÍTÁSA ---
@@ -456,12 +499,128 @@ function openDetailOverlay(trackId) {
     resetStars();
     overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
+    loadReviews(track.id);
 }
 
 function closeDetailView() {
     const overlay = document.getElementById('full-page-detail');
     overlay.classList.remove('active');
     document.body.style.overflow = '';
+}
+
+async function loadReviews(trackId) {
+    const container = document.getElementById('reviews-container');
+    const ratingText = document.getElementById('detail-rating-text');
+
+    // Loading állapot
+    container.innerHTML = '<div style="text-align:center; padding:10px;"><i class="fas fa-circle-notch fa-spin"></i></div>';
+
+    try {
+        const response = await fetch(`/api/tracks/${trackId}/reviews/`);
+        const data = await response.json();
+
+        // 1. Átlag és darabszám frissítése a fejlécben
+        if (ratingText) {
+            ratingText.innerHTML = `${data.average_rating} (${data.rating_count} értékelés)`;
+            // Ha van csillagmegjelenítőd, itt frissítheted az "összesített" csillagokat is vizuálisan
+        }
+
+        // 2. Lista renderelése
+        if (data.reviews.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:10px;">Még nincs vélemény. Légy te az első!</div>';
+        } else {
+            let html = '';
+            data.reviews.forEach(review => {
+
+                // --- ITT A JAVÍTOTT CIKLUS ---
+                let starsHtml = '';
+                for(let i=1; i<=5; i++) {
+                    if (review.rating >= i) {
+                        starsHtml += '<i class="fas fa-star" style="color:#FFD700; font-size:0.8rem;"></i>';
+                    } else if (review.rating >= i - 0.5) {
+                        starsHtml += '<i class="fas fa-star-half-alt" style="color:#FFD700; font-size:0.8rem;"></i>';
+                    } else {
+                        starsHtml += '<i class="far fa-star" style="color:#444; font-size:0.8rem;"></i>';
+                    }
+                }
+                // -----------------------------
+
+                html += `
+                <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:10px; margin-bottom:10px; border:1px solid rgba(255,255,255,0.05);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span style="font-weight:bold; color:white;">${review.username}</span>
+                        <span style="font-size:0.8rem; color:#94a3b8;">${new Date(review.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div style="margin-bottom:5px;">${starsHtml}</div>
+                    <p style="margin:0; font-size:0.8rem; color:#cbd5e1; font-style:italic;">"${review.comment || ''}"</p>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+    } catch (error) {
+        console.error("Hiba a vélemények betöltésekor:", error);
+        container.innerHTML = '<div style="color:red; text-align:center;">Hiba történt.</div>';
+    }
+}
+
+async function submitReview() {
+    // Globális változók a modalból
+    const trackId = window.currentDetailTrackId;
+    const comment = document.querySelector('.review-input').value;
+
+    // A csillag ratinget a globális változóból szedjük ki
+    const rating = window.currentStarRating || 0;
+
+    if (!trackId) {
+        console.error("Hiba: Nincs trackId!");
+        return;
+    }
+
+    if (!rating || rating === 0) {
+        alert("Kérlek válassz legalább egy csillagot!");
+        return;
+    }
+
+    const btn = document.querySelector('.btn-submit-review');
+    const origText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Küldés...';
+    btn.disabled = true;
+
+    try {
+        const csrf = getCookie('csrftoken');
+        const response = await fetch(`/api/tracks/${trackId}/reviews/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrf
+            },
+            body: JSON.stringify({
+                rating: rating, // <--- ITT A VÁLTOZÁS: Töröltük a Math.ceil-t!
+                comment: comment
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("Köszönjük az értékelést!");
+            document.querySelector('.review-input').value = ""; // Törlés
+            if(window.resetStars) window.resetStars(); // Csillagok nullázása
+            loadReviews(trackId); // Lista újratöltése
+        } else {
+            // Hibaüzenet (pl. "Ma már értékeltél")
+            alert(data.message || "Hiba történt a mentéskor.");
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("Hálózati hiba.");
+    } finally {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+    }
 }
 
 // --- CSILLAG ÉRTÉKELŐ LOGIKA ---
@@ -519,6 +678,7 @@ function initStarRating() {
         let isHalf = x < (rect.width / 2);
 
         currentRating = isHalf ? starIndex - 0.5 : starIndex;
+        window.currentStarRating = currentRating;
 
         if(display) display.textContent = currentRating.toFixed(1);
 
