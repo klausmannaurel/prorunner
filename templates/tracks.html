@@ -274,39 +274,47 @@
                                 </a>
                             </div>
                         </div>
-
                         <div class="info-card" style="position: sticky; top: 30px;">
-                            <h3 class="section-title" style="justify-content: center;">Értékeld a pályát!</h3>
+    <h3 class="section-title" style="justify-content: center;">Értékeld a pályát!</h3>
 
-                            <div class="rating-wrapper">
-                                <div class="stars-container" id="stars-box">
-                                    <div class="star-wrapper" data-index="1"><i class="far fa-star star-empty"></i>
-                                        <div class="star-filled"><i class="fas fa-star"></i></div>
-                                    </div>
-                                    <div class="star-wrapper" data-index="2"><i class="far fa-star star-empty"></i>
-                                        <div class="star-filled"><i class="fas fa-star"></i></div>
-                                    </div>
-                                    <div class="star-wrapper" data-index="3"><i class="far fa-star star-empty"></i>
-                                        <div class="star-filled"><i class="fas fa-star"></i></div>
-                                    </div>
-                                    <div class="star-wrapper" data-index="4"><i class="far fa-star star-empty"></i>
-                                        <div class="star-filled"><i class="fas fa-star"></i></div>
-                                    </div>
-                                    <div class="star-wrapper" data-index="5"><i class="far fa-star star-empty"></i>
-                                        <div class="star-filled"><i class="fas fa-star"></i></div>
-                                    </div>
-                                </div>
-                                <div class="current-rating-display" id="display-rating">0.0</div>
-                            </div>
+    <div class="rating-wrapper">
+        <div class="stars-container" id="stars-box">
+            <div class="star-wrapper" data-index="1"><i class="far fa-star star-empty"></i>
+                <div class="star-filled"><i class="fas fa-star"></i></div>
+            </div>
+            <div class="star-wrapper" data-index="2"><i class="far fa-star star-empty"></i>
+                <div class="star-filled"><i class="fas fa-star"></i></div>
+            </div>
+            <div class="star-wrapper" data-index="3"><i class="far fa-star star-empty"></i>
+                <div class="star-filled"><i class="fas fa-star"></i></div>
+            </div>
+            <div class="star-wrapper" data-index="4"><i class="far fa-star star-empty"></i>
+                <div class="star-filled"><i class="fas fa-star"></i></div>
+            </div>
+            <div class="star-wrapper" data-index="5"><i class="far fa-star star-empty"></i>
+                <div class="star-filled"><i class="fas fa-star"></i></div>
+            </div>
+        </div>
+        <div class="current-rating-display" id="display-rating">0.0</div>
+    </div>
 
-                            <form style="margin-top: 20px;">
-                                <textarea class="review-input"
-                                    placeholder="Milyen volt a futás? Milyen a burkolat állapota?"></textarea>
-                                <button type="button" class="btn-submit-review"
-                                    onclick="alert('Ez a funkció hamarosan elérhető!')">Vélemény Küldése <i
-                                        class="fas fa-paper-plane"></i></button>
-                            </form>
-                        </div>
+    <form style="margin-top: 20px;">
+        <textarea class="review-input" placeholder="Milyen volt a futás? Milyen a burkolat állapota?"></textarea>
+        <button type="button" class="btn-submit-review" onclick="submitReview()">
+            Vélemény Küldése <i class="fas fa-paper-plane"></i>
+        </button>
+    </form>
+</div>
+<div class="reviews-list-container" style="margin-top: 30px; max-height: 300px; overflow-y: auto;">
+    <h4 style="color: var(--neon-blue); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+        Legutóbbi vélemények
+    </h4>
+    <div id="reviews-container">
+        <div style="text-align:center; color:#94a3b8; padding:10px;">Még nincs vélemény.</div>
+    </div>
+</div>
+
+
                     </div>
 
                 </div>
