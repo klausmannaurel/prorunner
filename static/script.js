@@ -392,23 +392,34 @@ async function loadResults(trackId) {
                     trs += `<tr><td>${i + 1}.</td><td class="mono">${t}</td><td>${m.pace}</td><td>${m.speed}</td></tr>`;
                 });
 
+                // --- ÚJ RÉSZ KEZDETE: Név link generálása adminoknak ---
+                let runnerNameDisplay = res.runner_name;
+
+                // Csak akkor csinálunk linket, ha be van jelentkezve ÉS admin (staff)
+                if (currentUser && currentUser.is_staff) {
+                    runnerNameDisplay = `<a href="/results/runner/${encodeURIComponent(res.runner_name)}/"
+                                            title="Összes futás megtekintése"
+                                            style="color: var(--neon-blue); text-decoration: underline; cursor: pointer; position: relative; z-index: 20;">
+                                            ${res.runner_name} <i class="fas fa-external-link-alt" style="font-size: 0.7em;"></i>
+                                         </a>`;
+                }
+                // --- ÚJ RÉSZ VÉGE ---
+
                 const canEdit = currentUser && (currentUser.is_staff || res.can_edit || res.runner_name === currentUser.full_name);
 
-                // --- ÚJ: startEdit-nek átadjuk a res.date-et is (és figyelünk az idézőjelekre) ---
                 const actionButtons = canEdit ? `
                     <div style="position: absolute; top: 10px; right: 10px; z-index: 10;">
                         <button onclick="startEdit(${res.id}, '${res.runner_name.replace(/'/g, "\\'")}', '${res.laps_count}', '${res.lap_times}', '${res.track}', ${res.runner_id}, '${res.date}')" class="btn-icon" style="background:white; border:1px solid #e2e8f0; border-radius:50%; width:30px; height:30px; cursor:pointer; color:#3b82f6; margin-right:5px;"><i class="fas fa-pencil-alt"></i></button>
                         <button onclick="deleteResult(${res.id}, '${res.track}')" class="btn-icon" style="background:white; border:1px solid #e2e8f0; border-radius:50%; width:30px; height:30px; cursor:pointer; color:#ef4444;"><i class="fas fa-trash"></i></button>
                     </div>` : '';
 
-                // --- ÚJ: Dátum megjelenítése a kártyán ---
                 html += `<div class="result-card" style="animation-delay:${idx * 0.1}s; position: relative;">
                             ${actionButtons}
                             <div class="rank-indicator ${rankClass}">${icon ? `<i class="fas ${icon}"></i>` : `#${rank}`}</div>
                             <div class="runner-section">
                                 <div class="runner-avatar-lg">${mono}</div>
                                 <div class="runner-details">
-                                    <h3>${res.runner_name}</h3>
+                                    <h3>${runnerNameDisplay}</h3>
 
                                     <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">
                                         <i class="far fa-calendar-alt"></i> ${res.date}
