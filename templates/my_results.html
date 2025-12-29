@@ -187,8 +187,21 @@
 <div class="results-container">
 
     <div class="results-header">
-        <h2><i class="fas fa-trophy"></i> Saját Eredményeim</h2>
+    <h2><i class="fas fa-trophy"></i> {{ page_title|default:"Saját Eredményeim" }}</h2>
+
+    {% if is_admin_view %}
+        <p style="color: var(--neon-blue);">Admin nézet: {{ results.count }} rögzített futás</p>
+
+        <a href="{% url 'dashboard' %}" class="btn-hero secondary"
+           style="font-size: 0.9rem; padding: 10px 20px; margin-top:15px; display:inline-block; text-decoration:none;
+                  color: #FFFF00; border: 1px solid #FFFF00; border-radius: 50px;
+                  box-shadow: 0 0 10px rgba(255, 255, 0, 0.3); transition: all 0.3s;">
+            <i class="fas fa-arrow-left"></i> Vissza a Dashboardra
+        </a>
+
+    {% else %}
         <p style="color: #94a3b8;">Az eddigi összes rögzített futásod egy helyen.</p>
+    {% endif %}
     </div>
 
     <div class="glass-table-wrapper">
@@ -232,12 +245,33 @@
             <h3>Még nincs rögzített eredményed.</h3>
             <p>Használd a Stoppert vagy a Dashboardot új futás rögzítéséhez!</p>
             <br>
-            <a href="{% url 'stopwatch' %}" class="btn-hero primary" style="display:inline-flex; text-decoration:none;">
-                Futás Indítása
-            </a>
+
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+
+                <a href="{% url 'stopwatch' %}" class="btn-hero"
+                   style="display:inline-flex; text-decoration:none; align-items: center; gap: 10px;
+                          font-size: 1rem; padding: 12px 30px;
+                          border-radius: 50px; font-weight: 800; text-transform: uppercase;
+                          color: #39ff14; border: 1px solid #39ff14;
+                          background: rgba(57, 255, 20, 0.1);
+                          box-shadow: 0 0 15px rgba(57, 255, 20, 0.3); transition: all 0.3s;">
+                    Futás Indítása <i class="fas fa-play" style="font-size: 0.9em;"></i>
+                </a>
+
+                <a href="{% url 'dashboard' %}" class="btn-hero"
+                   style="display:inline-flex; text-decoration:none; align-items: center; gap: 10px;
+                          font-size: 1rem; padding: 12px 30px;
+                          border-radius: 50px; font-weight: 800; text-transform: uppercase;
+                          color: #00f3ff; border: 1px solid #00f3ff;
+                          background: rgba(0, 243, 255, 0.1);
+                          box-shadow: 0 0 15px rgba(0, 243, 255, 0.3); transition: all 0.3s;">
+                    <i class="fas fa-chart-line" style="font-size: 1.1em;"></i> Dashboard
+                </a>
+
+            </div>
+
         </div>
         {% endif %}
     </div>
-
 </div>
 {% endblock %}
