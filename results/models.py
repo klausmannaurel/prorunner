@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 # --- EZEK AZ ÚJ IMPORTOK KELLENEK A KÉPFELDOLGOZÁSHOZ ---
 from PIL import Image
@@ -132,3 +133,19 @@ class Profile(models.Model):
             height_m = self.height_cm / 100
             return round(self.weight_kg / (height_m ** 2), 1)
         return None
+
+class TrackReview(models.Model):
+    track = models.ForeignKey(Track, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.FloatField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name="Értékelés (1-5)"
+    )
+    comment = models.TextField(blank=True, null=True, verbose_name="Szöveges vélemény")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at'] # Legfrissebb elöl
+
+    def __str__(self):
+        return f"{self.user.username} - {self.track.name} ({self.rating})"
