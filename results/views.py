@@ -430,3 +430,25 @@ def my_results(request):
     results = Result.objects.filter(user=request.user).select_related('track').order_by('-date', '-recorded_at')
 
     return render(request, 'my_results.html', {'results': results})
+
+@login_required
+def runner_results(request, runner_name):
+    """
+    Adminok számára: egy adott nevű versenyző összes eredményének listázása.
+    """
+    # Csak adminok (is_staff) férhetnek hozzá mások eredményeihez így
+    if not request.user.is_staff:
+        # Ha nem admin, de véletlenül a saját nevére kattintott (bár a JS ezt nem ajánlja fel),
+        # akkor átirányíthatjuk a sima my_results-ra, vagy dobhatunk 403-at.
+        return render(request, 'index.html') # Vagy redirect('home')
+
+    # Szűrés név alapján (mivel a Dashboardon név jelenik meg)
+    results = Result.objects.filter(runner_name=runner_name).select_related('track').order_by('-date', '-recorded_at')
+
+    context = {
+        'results': results,
+        'page_title': f"{runner_name} eredményei", # Ezt adjuk át az átírt template-nek
+        'is_admin_view': True
+    }
+
+    return render(request, 'my_results.html', context)
