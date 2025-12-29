@@ -161,6 +161,7 @@
 .info-card:hover {
     border-color: var(--neon-blue);
     box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+    transform: translateY(-5px);    
 }
 
 h3.section-title {
