@@ -6,8 +6,7 @@
     left: 0;
     width: 100%;
     height: 70px;
-    background: rgba(5, 11, 20, 0.9);
-    /* Kicsit sötétebb alap */
+    background: rgba(5, 11, 20, 0.9); /* Kicsit sötétebb alap */
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -15,14 +14,31 @@
 }
 
 .nav-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 20px;
+    /* EREDETI VOLT: max-width: 1400px; margin: 0 auto; */
+
+    /* ÚJ BEÁLLÍTÁS: Teljes szélesség */
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+
+    /* Kicsit növeltem a belső margót (20px -> 40px),
+       hogy ne ragadjon teljesen a képernyő szélére, elegánsabb így */
+    padding: 0 40px;
+
     height: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
+
+/* --- MOBIL NÉZET KORREKCIÓ --- */
+/* Mobilon a 40px túl sok lenne, ott vegyük vissza 20px-re */
+@media (max-width: 900px) {
+    .nav-container {
+        padding: 0 20px;
+    }
+}
+
 
 /* --- LOGÓ --- */
 .nav-brand {
@@ -84,8 +100,7 @@
     letter-spacing: 0.5px;
 }
 
-.nav-link:hover,
-.nav-link.active {
+.nav-link:hover, .nav-link.active {
     color: #ffffff;
     text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
 }
@@ -97,25 +112,18 @@
     left: 0;
     height: 3px;
     background: #00f3ff;
-    box-shadow: 0 0 15px #00f3ff, 0 0 5px #fff;
-    /* Dupla glow */
+    box-shadow: 0 0 15px #00f3ff, 0 0 5px #fff; /* Dupla glow */
     border-radius: 4px;
     /* Ez a cubic-bezier adja a ruganyos, elegáns mozgást */
     transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-    width: 0;
-    /* JS állítja */
-    opacity: 0;
-    /* JS állítja */
+    width: 0; /* JS állítja */
+    opacity: 0; /* JS állítja */
     z-index: 10;
     pointer-events: none;
 }
 
 /* --- GOMBOK --- */
-.nav-actions {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
+.nav-actions { display: flex; align-items: center; gap: 15px; }
 
 .auth-pill {
     padding: 8px 24px;
@@ -130,9 +138,7 @@
     cursor: pointer;
     transition: all 0.3s;
     box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
 }
 
 .auth-pill:hover {
@@ -146,23 +152,14 @@
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: white;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    transition: all 0.3s;
+    display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.3s;
 }
 
 .avatar-mini {
-    width: 28px;
-    height: 28px;
+    width: 28px; height: 28px;
     background: linear-gradient(135deg, #bc13fe, #00f3ff);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
+    color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-weight: bold;
 }
 
 /* --- HAMBURGER IKON --- */
@@ -205,12 +202,12 @@
         flex-direction: column;
         align-items: center;
         padding: 30px 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
 
         transform: translateY(-150%);
         transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 999;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
     .nav-menu.active {
@@ -228,11 +225,11 @@
         justify-content: center;
         padding: 20px 0;
         font-size: 1.2rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 
     .nav-link:hover {
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255,255,255,0.05);
     }
 
     /* 3. Sliding Indicator elrejtése mobilon */
