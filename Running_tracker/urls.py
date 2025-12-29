@@ -52,6 +52,8 @@ urlpatterns = [
 
     # Router a pályákhoz (api/tracks/)
     path('api/', include(router.urls)),
+
+    path('api/tracks/<str:track_id>/reviews/', views.track_reviews, name='track-reviews'),
 ]
 
 # --- MÉDIA FÁJLOK KISZOLGÁLÁSA (Képekhez) ---
