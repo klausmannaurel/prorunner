@@ -460,7 +460,7 @@ textarea.review-input {
 /* TÉRKÉP STÍLUSOK */
 #track-map-container {
     width: 100%;
-    height: 250px; /* Térkép magassága */
+    height: 400px; /* Térkép magassága */
     border-radius: 15px;
     overflow: hidden;
     border: 1px solid var(--glass-border);
@@ -479,8 +479,12 @@ textarea.review-input {
    Megfordítjuk a színeket (invert), majd korrigáljuk a színárnyalatot (hue-rotate),
    hogy ne legyen minden furcsa színű, végül sötétítjük.
 */
+
 .leaflet-tile-pane {
-    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+    /* brightness(150%): 50%-kal világosabb lesz minden (a fekete -> szürke lesz)
+       contrast(90%): Kicsit lágyítunk rajta, hogy ne legyen túl éles
+    */
+    filter: brightness(150%) contrast(90%);
 }
 
 /* Markerek és feliratok visszaállítása, hogy azok ne legyenek invertálva (opcionális) */
