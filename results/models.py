@@ -4,16 +4,15 @@ from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.validators import MinValueValidator, MaxValueValidator
-
-# --- EZEK AZ ÚJ IMPORTOK KELLENEK A KÉPFELDOLGOZÁSHOZ ---
 from PIL import Image
 from io import BytesIO
 from django.core.files.base import ContentFile
 import os
+import gpxpy
 
 class Track(models.Model):
     """
-    Futópálya modell képpel, THUMBNAIL-LEL és tulajdonossal kiegészítve.
+    Futópálya modell képpel, THUMBNAIL-LEL, GPX fájllal és tulajdonossal kiegészítve.
     """
     SURFACE_CHOICES = [
         ('beton', 'Beton'),
@@ -32,8 +31,11 @@ class Track(models.Model):
     # EREDETI (NAGY) KÉP
     image = models.ImageField(upload_to='track_images/', blank=True, null=True, verbose_name="Pálya fotó")
 
-    # --- ÚJ MEZŐ: KICSI KÉP (Thumbnail) ---
+    # KICSI KÉP (Thumbnail)
     image_thumbnail = models.ImageField(upload_to='track_images/thumbs/', blank=True, null=True, verbose_name="Kicsi kép")
+
+    # --- ÚJ MEZŐ: GPX fájl feltöltése ---
+    gpx_file = models.FileField(upload_to='track_gpx/', blank=True, null=True, verbose_name="GPX Fájl")
 
     # Szolgáltatások
     is_free = models.BooleanField(default=True, verbose_name="Ingyenes?")
@@ -61,38 +63,85 @@ class Track(models.Model):
     def __str__(self):
         return self.name
 
-    # --- ITT TÖRTÉNIK A VARÁZSLAT: SAVE METÓDUS FELÜLÍRÁSA ---
+    # --- ÚJ FÜGGVÉNY: Koordináták kinyerése a térképhez (API-hoz kell) ---
+    def get_coordinates_list(self):
+        """
+        Visszaadja a GPX-ből a koordinátákat [[lat, lon], [lat, lon], ...] formátumban
+        a Leaflet térkép számára.
+        """
+        if not self.gpx_file:
+            return []
+
+        try:
+            # Fájl megnyitása olvasásra
+            self.gpx_file.open()
+            gpx = gpxpy.parse(self.gpx_file)
+
+            points = []
+            for track in gpx.tracks:
+                for segment in track.segments:
+                    for point in segment.points:
+                        # A Leaflet [szélesség, hosszúság] párokat vár
+                        points.append([point.latitude, point.longitude])
+
+            self.gpx_file.close() # Fontos bezárni!
+            return points
+        except Exception as e:
+            print(f"Hiba a GPX olvasásakor: {e}")
+            return []
+
+    # --- SAVE METÓDUS: KÉP + GPX LOGIKA EGYBEN ---
     def save(self, *args, **kwargs):
-        # Csak akkor generálunk, ha van nagy kép
+        # 1. KÉP FELDOLGOZÁSA (Ez maradhat változatlan)
         if self.image:
-            # Megnyitjuk a nagy képet a PIL könyvtárral
-            img = Image.open(self.image)
+            try:
+                img = Image.open(self.image)
+                if img.mode in ("RGBA", "P"):
+                    img = img.convert("RGB")
+                img.thumbnail((400, 400))
+                thumb_io = BytesIO()
+                img.save(thumb_io, format='JPEG', quality=85)
+                thumb_filename = os.path.basename(self.image.name).split('.')[0] + '_thumb.jpg'
+                if not self.image_thumbnail:
+                     self.image_thumbnail.save(thumb_filename, ContentFile(thumb_io.getvalue()), save=False)
+            except Exception as e:
+                print(f"Thumbnail hiba: {e}")
 
-            # Ha szükséges, konvertáljuk RGB-be (pl. PNG esetén az átlátszóság miatt)
-            if img.mode in ("RGBA", "P"):
-                img = img.convert("RGB")
+        # 2. GPX FELDOLGOZÁSA (ITT A JAVÍTÁS)
+        if self.gpx_file:
+            try:
+                self.gpx_file.open() # Kinyitjuk olvasásra
+                gpx = gpxpy.parse(self.gpx_file)
 
-            # Átméretezzük (thumbnail metódus megtartja az arányokat!)
-            # 400x400 pixel lesz a maximum méret (elég a kártyákhoz)
-            img.thumbnail((400, 400))
+                # Hossz kiszámolása
+                length_2d = gpx.length_2d()
+                if length_2d > 0:
+                    self.distance_km_per_lap = round(length_2d / 1000, 2)
 
-            # Mentés memóriába (BytesIO)
-            thumb_io = BytesIO()
-            img.save(thumb_io, format='JPEG', quality=85)
+                # Kezdőpont beállítása
+                if self.lat == 0 or self.lon == 0:
+                    # Először próbáljuk track-ként
+                    if gpx.tracks and gpx.tracks[0].segments and gpx.tracks[0].segments[0].points:
+                        start_pt = gpx.tracks[0].segments[0].points[0]
+                        self.lat = start_pt.latitude
+                        self.lon = start_pt.longitude
+                    # Ha nincs track, próbáljuk route-ként (biztonsági tartalék)
+                    elif gpx.routes and gpx.routes[0].points:
+                        start_pt = gpx.routes[0].points[0]
+                        self.lat = start_pt.latitude
+                        self.lon = start_pt.longitude
 
-            # Fájlnév generálása a thumbnailhez
-            thumb_filename = os.path.basename(self.image.name).split('.')[0] + '_thumb.jpg'
+                # --- A JAVÍTÁS LÉNYEGE ---
+                # self.gpx_file.close()  <-- EZT TÖRÖLD KI!
 
-            # Fontos: A save paraméterben False-t adunk meg, hogy ne kerüljünk végtelen ciklusba!
-            # De mivel itt a save() elején vagyunk, és a mezőhöz rendeljük hozzá,
-            # a Django FileField mechanizmusa kezeli.
-            # A legjobb módszer: ellenőrizni, hogy változott-e, de egyszerűsítve:
+                # Helyette tekerjük vissza a "szalagot" az elejére,
+                # hogy a Django (super().save) az elejétől tudja elmenteni a fájlt:
+                self.gpx_file.seek(0)
 
-            # Csak akkor mentjük el a thumbnailt, ha még nincs, vagy ha az image mező változott.
-            # (Egyszerűsített megoldás: mindig legeneráljuk, ha mentés van és nincs thumbnail)
-            if not self.image_thumbnail:
-                 self.image_thumbnail.save(thumb_filename, ContentFile(thumb_io.getvalue()), save=False)
+            except Exception as e:
+                print(f"GPX feldolgozási hiba: {e}")
 
+        # Itt történik a tényleges mentés, ehhez kell, hogy nyitva legyen a fájl!
         super().save(*args, **kwargs)
 
 class Result(models.Model):
