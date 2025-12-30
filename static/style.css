@@ -430,6 +430,29 @@ select#track-select option {
 }
 
 /* --- MAP PANEL --- */
+
+/* --- PROFI NEON MARKER (Lüktető pont) --- */
+.pulse-icon {
+    background-color: #00f3ff;      /* A pötty színe (Neon kék) */
+    border-radius: 50%;             /* Kerek legyen */
+    border: 2px solid #ffffff;      /* Fehér keret */
+    box-shadow: 0 0 5px #00f3ff;    /* Alap ragyogás */
+    animation: pulse-animation 2s infinite; /* Az animáció bekapcsolása */
+}
+
+/* Az animáció leírása: 2 másodperc alatt dagad és halványul */
+@keyframes pulse-animation {
+	0% {
+		box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.7);
+	}
+	70% {
+		box-shadow: 0 0 0 20px rgba(0, 243, 255, 0); /* Kifele halványuló gyűrű */
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(0, 243, 255, 0);
+	}
+}
+
 .map-panel {
     position: relative;
     background-color: #0f172a;
