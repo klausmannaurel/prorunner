@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', async () => {
     // Várjuk meg a felhasználót
     await loadCurrentUser();
@@ -13,6 +12,7 @@ let allTracksData = [];
 let $grid; // Itt tároljuk majd az Isotope példányt
 let mapInstance = null; // Globális változó a térképnek
 let mapMarker = null;
+let mapPolyline = null;
 
 // FONTOS: Itt TÖRÖLTÜK a 'let currentUser = null' sort,
 // mert a script.js már létrehozta globálisan!
@@ -444,7 +444,7 @@ function openDetailOverlay(trackId) {
 
     // --- 6. KOORDINÁTA ALAPÚ FUNKCIÓK (Térkép + Időjárás) ---
     const mapCard = document.getElementById('map-card-container');
-    const weatherCard = document.getElementById('weather-card'); // ÚJ: Időjárás kártya
+    const weatherCard = document.getElementById('weather-card');
 
     const lat = parseFloat(track.lat);
     const lon = parseFloat(track.lon);
@@ -455,44 +455,69 @@ function openDetailOverlay(trackId) {
 
         // Kártyák megjelenítése
         mapCard.style.display = 'block';
-        if(weatherCard) weatherCard.style.display = 'block'; // ÚJ
+        if(weatherCard) weatherCard.style.display = 'block';
 
         // >> IDŐJÁRÁS LEKÉRÉSE <<
-        loadWeather(lat, lon); // Ez hívja meg az új időjárás függvényt
+        loadWeather(lat, lon);
 
-        // Google Maps link frissítése
+        // Google Maps link frissítése (Javítottam a $ jelet, ami hiányzott)
         const gmapsLink = document.getElementById('google-maps-link');
-        if(gmapsLink) gmapsLink.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+        if(gmapsLink) gmapsLink.href = `https://www.google.com/maps?q=$${lat},${lon}`;
 
-        // Leaflet térkép inicializálása (késleltetve a modal animáció miatt)
+        // Leaflet térkép inicializálása
         setTimeout(() => {
             if (!mapInstance) {
                 mapInstance = L.map('track-map').setView([lat, lon], 14);
 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 19
+                // --- 1. CARTO DARK MATTER (Alap térkép) ---
+                // (A világosítást most már a CSS végzi!)
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                    subdomains: 'abcd',
+                    maxZoom: 20
                 }).addTo(mapInstance);
+
             } else {
-                mapInstance.invalidateSize(); // Fontos: újraszámolja a méretet
-                mapInstance.setView([lat, lon], 14);
+                mapInstance.invalidateSize();
             }
 
-            // Marker kezelés
-            if (mapMarker) {
-                mapInstance.removeLayer(mapMarker);
-            }
-            mapMarker = L.marker([lat, lon]).addTo(mapInstance)
+            // Takarítás (előző elemek törlése)
+            if (mapMarker) mapInstance.removeLayer(mapMarker);
+            if (mapPolyline) mapInstance.removeLayer(mapPolyline);
+
+            // --- 2. LÜKTETŐ MARKER LÉTREHOZÁSA ---
+            const customIcon = L.divIcon({
+                className: 'pulse-icon', // Ez hivatkozik a CSS-re
+                iconSize: [16, 16],      // Picit finomabb méret
+                iconAnchor: [8, 8],      // Középpont
+                popupAnchor: [0, -10]
+            });
+
+            // Marker lerakása az új ikonnal
+            mapMarker = L.marker([lat, lon], {icon: customIcon}).addTo(mapInstance)
                 .bindPopup(`<b>${track.name}</b><br>${track.distance_km_per_lap} km`)
                 .openPopup();
+
+            // --- 3. NEON ÚTVONAL ---
+            if (track.coordinates && track.coordinates.length > 0) {
+                mapPolyline = L.polyline(track.coordinates, {
+                    color: '#00f3ff',       // Neon kék
+                    weight: 4,
+                    opacity: 1.0,           // Teljes ragyogás
+                    lineJoin: 'round'
+                }).addTo(mapInstance);
+
+                mapInstance.fitBounds(mapPolyline.getBounds(), { padding: [30, 30] });
+            } else {
+                mapInstance.setView([lat, lon], 14);
+            }
 
         }, 300);
 
     } else {
-        // Ha nincs koordináta, elrejtjük a térképet és az időjárást is
         document.getElementById('stat-coords').textContent = "-";
         mapCard.style.display = 'none';
-        if(weatherCard) weatherCard.style.display = 'none'; // ÚJ
+        if(weatherCard) weatherCard.style.display = 'none';
     }
 
     // 7. Végső megjelenítés
