@@ -5,7 +5,7 @@ from .models import Track, Result, TrackReview
 # --- TRACK SERIALIZER ---
 class TrackSerializer(serializers.ModelSerializer):
     """
-    Serializer a Track modellhez. Kezeli a képet, tulajdonost és az értékeléseket.
+    Serializer a Track modellhez. Kezeli a képet, tulajdonost, értékeléseket ÉS MOST MÁR A GPX ADATOKAT IS.
     """
     surface_display = serializers.CharField(source='get_surface_type_display', read_only=True)
     created_by = serializers.StringRelatedField(read_only=True)
@@ -15,9 +15,24 @@ class TrackSerializer(serializers.ModelSerializer):
     average_rating = serializers.FloatField(read_only=True)
     review_count = serializers.IntegerField(read_only=True)
 
+    # --- ÚJ MEZŐK A GPX MIATT ---
+    coordinates = serializers.SerializerMethodField()
+    gpx_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Track
         fields = '__all__'
+
+    # --- ÚJ SEGÉDFÜGGVÉNYEK ---
+    def get_coordinates(self, obj):
+        # Ez hívja meg a models.py-ban írt get_coordinates_list() függvényt
+        return obj.get_coordinates_list()
+
+    def get_gpx_url(self, obj):
+        # Visszaadja a fájl elérési útját, ha van
+        if obj.gpx_file:
+            return obj.gpx_file.url
+        return None
 
 # --- RESULT SERIALIZER ---
 class ResultSerializer(serializers.ModelSerializer):
@@ -55,7 +70,7 @@ class UserSerializer(serializers.ModelSerializer):
     def get_full_name(self, obj):
         return obj.get_full_name() or obj.username
 
-# --- TRACK REVIEW SERIALIZER (ÚJ) ---
+# --- TRACK REVIEW SERIALIZER ---
 class TrackReviewSerializer(serializers.ModelSerializer):
     """
     Serializer a véleményekhez és csillagozáshoz.
