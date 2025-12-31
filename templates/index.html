@@ -164,10 +164,9 @@
         overflow: hidden;
         padding: 80px 20px 40px 20px;
         background: transparent;
-        /* background: radial-gradient(circle at center, #0a1120 0%, #050b14 100%); */
     }
 
-       /* JAVÍTÁS: A .hero-section::before blokkot módosítjuk */
+    /* Háttér rács kikapcsolása (a globális body rács látszik) */
     .hero-section::before {
         content: '';
         position: absolute;
@@ -175,28 +174,32 @@
         left: 0;
         width: 100%;
         height: 100%;
-
-        /* --- EZT A RÉSZT KAPCSOLJUK KI: --- */
-        /* background-image:
-            linear-gradient(rgba(0, 243, 255, 0.2) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 243, 255, 0.2) 1px, transparent 1px);
-        background-size: 50px 50px; */
-
-        /* Helyette elrejtjük ezt a réteget, hogy a globális (body) rács látszódjon */
         display: none;
     }
 
-    /* --- PORTAL CONTAINER --- */
+    /* --- PORTAL CONTAINER (A fő doboz) --- */
+    /* Függőleges (oszlop) elrendezés */
     .glass-portal-container {
         position: relative;
         width: 100%;
         max-width: 1400px;
-        height: 700px;
+
+        /* Rugalmas magasság */
+        min-height: 80vh;
+        height: auto;
+
         display: flex;
+        flex-direction: column;
+        /* Egymás alá */
         align-items: center;
         justify-content: center;
+        gap: 30px;
+        /* Távolság a cím és a videó között */
+
         z-index: 10;
         perspective: 1200px;
+        padding-top: 20px;
+        padding-bottom: 40px;
     }
 
     /* --- SIDE DECOR (Oldalsó csíkok) --- */
@@ -234,13 +237,53 @@
         animation-delay: 2s;
     }
 
-    /* --- PORTAL FRAME (KERET) --- */
+    /* --- GLASS CONTENT (ÜVEGTÁBLA - CÍM) --- */
+    /* MÓDOSÍTVA: Feljebb pozicionálva */
+    .glass-content {
+        position: relative;
+        transform: none;
+        top: auto;
+        left: auto;
+
+        /* Sorrend: Legyen ez legfelül */
+        order: 1;
+
+        /* POZÍCIÓ MÓDOSÍTÁS: Feljebb húzzuk negatív margóval */
+        margin-top: -70px;
+        margin-bottom: 20px;
+        /* Kis extra térköz alul */
+
+        width: 100%;
+        max-width: 600px;
+        /* Szélesebb */
+
+        padding: 35px 30px;
+        text-align: center;
+
+        background: rgba(13, 19, 33, 0.6);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+        border-radius: 24px;
+        z-index: 20;
+    }
+
+    /* --- PORTAL FRAME (VIDEÓ KERET) --- */
+    /* Fix magasság és alsó pozíció */
     .portal-frame {
         position: relative;
         width: 100%;
-        height: 100%;
+        max-width: 1200px;
 
-        /* MATEK: 50px (belső) + 14px (padding) = 64px (külső) */
+        height: 500px;
+        /* Fix magasság a szép arányokért */
+
+        /* Sorrend: Ez legyen alul */
+        order: 2;
+
         padding: 14px;
         border-radius: 64px;
 
@@ -295,10 +338,7 @@
     .video-mask {
         width: 100%;
         height: 100%;
-
-        /* Belső sugár: 50px */
         border-radius: 50px;
-
         overflow: hidden;
         position: relative;
         background: #000;
@@ -351,34 +391,10 @@
         backdrop-filter: blur(4px);
     }
 
-    /* --- GLASS CONTENT (Kártya) --- */
-    .glass-content {
-        position: absolute;
-        top: 0%;
-        /* Lejjebb tolva, hogy ne takarjon */
-        left: 50%;
-        transform: translate(-50%, -50%);
-
-        width: 90%;
-        max-width: 600px;
-        /* Keskenyebb */
-        padding: 35px 30px;
-        text-align: center;
-
-        background: rgba(13, 19, 33, 0.6);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-top: 1px solid rgba(255, 255, 255, 0.15);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
-        border-radius: 24px;
-        z-index: 20;
-    }
-
+    /* --- SZÖVEG STÍLUSOK --- */
     .hero-title {
         font-family: 'Exo 2', sans-serif;
-        font-size: 3.2rem;
+        font-size: 4rem;
         font-weight: 800;
         margin: 0 0 10px 0;
         line-height: 1.1;
@@ -417,7 +433,6 @@
         position: relative;
         padding: 14px 32px;
         border-radius: 50px;
-        /* Lekerekítve */
         text-decoration: none;
         font-weight: 700;
         text-transform: uppercase;
@@ -465,12 +480,11 @@
         transform: translateX(4px);
     }
 
-    /* --- MOBIL NÉZET (14px Vastagság megtartva!) --- */
+    /* --- MOBIL NÉZET --- */
     @media (max-width: 900px) {
         .glass-portal-container {
-            flex-direction: column;
-            height: auto;
             max-width: 100%;
+            /* Mobilon is marad a Column elrendezés */
         }
 
         .side-decor {
@@ -479,35 +493,32 @@
 
         .portal-frame {
             height: 300px;
+            /* Kisebb videó */
             width: 100%;
-            margin-bottom: -50px;
             animation: none;
 
-            /* MOBIL MATEK: Tartjuk a 14px keretet! */
+            margin-bottom: 0;
             padding: 14px;
-
-            /* Külső: 44px (hogy mobilon ne legyen túl nagy a kerekítés) */
             border-radius: 44px;
         }
 
         .video-mask {
-            /* Belső: 44px - 14px = 30px */
             border-radius: 30px;
         }
 
         .glass-content {
-            position: relative;
-            top: auto;
-            left: auto;
-            transform: none;
             width: 100%;
             max-width: 100%;
             background: rgba(13, 19, 33, 0.80);
             backdrop-filter: none;
-            border-radius: 0 0 20px 20px;
-            border: none;
+
+            /* Mobilon NE húzzuk feljebb, mert ott kevés a hely */
+            margin-top: 0;
+
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: none;
-            padding: 50px 20px 30px 20px;
+            padding: 30px 20px;
         }
 
         .hero-title {
