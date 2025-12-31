@@ -9,6 +9,7 @@ from io import BytesIO
 from django.core.files.base import ContentFile
 import os
 import gpxpy
+import math
 
 class Track(models.Model):
     """
@@ -63,7 +64,7 @@ class Track(models.Model):
     def __str__(self):
         return self.name
 
-    # --- ÚJ FÜGGVÉNY: Koordináták kinyerése a térképhez (API-hoz kell) ---
+    # --- Koordináták kinyerése a térképhez (Leaflet útvonalrajzoláshoz) ---
     def get_coordinates_list(self):
         """
         Visszaadja a GPX-ből a koordinátákat [[lat, lon], [lat, lon], ...] formátumban
@@ -90,9 +91,50 @@ class Track(models.Model):
             print(f"Hiba a GPX olvasásakor: {e}")
             return []
 
+    # --- ÚJ FÜGGVÉNY: GPS pont kiszámolása távolság alapján (Live Trackerhez) ---
+    def get_lat_lon_at_distance(self, target_meters):
+        """
+        Kiszámolja, hogy a GPX útvonalon hol van a 'target_meters' távolság.
+        Visszaadja: {'lat': x, 'lon': y} vagy None
+        """
+        if not self.gpx_file:
+            return None
+
+        try:
+            self.gpx_file.open()
+            gpx = gpxpy.parse(self.gpx_file)
+            self.gpx_file.seek(0) # Visszatekerjük az elejére
+
+            total_dist = 0
+            prev_point = None
+
+            # Végigmegyünk a pontokon
+            for track in gpx.tracks:
+                for segment in track.segments:
+                    for point in segment.points:
+                        if prev_point:
+                            # Távolság az előző ponttól (méterben)
+                            dist = point.distance_2d(prev_point)
+                            total_dist += dist
+
+                            # Ha átléptük a cél távolságot, ez a mi pontunk!
+                            if total_dist >= target_meters:
+                                return {'lat': point.latitude, 'lon': point.longitude}
+
+                        prev_point = point
+
+            # Ha a futó többet nyomott, mint a pálya hossza, visszaadjuk az utolsó pontot
+            if prev_point:
+                 return {'lat': prev_point.latitude, 'lon': prev_point.longitude}
+
+        except Exception as e:
+            print(f"GPX hiba: {e}")
+            return None
+        return None
+
     # --- SAVE METÓDUS: KÉP + GPX LOGIKA EGYBEN ---
     def save(self, *args, **kwargs):
-        # 1. KÉP FELDOLGOZÁSA (Ez maradhat változatlan)
+        # 1. KÉP FELDOLGOZÁSA
         if self.image:
             try:
                 img = Image.open(self.image)
@@ -107,7 +149,7 @@ class Track(models.Model):
             except Exception as e:
                 print(f"Thumbnail hiba: {e}")
 
-        # 2. GPX FELDOLGOZÁSA (ITT A JAVÍTÁS)
+        # 2. GPX FELDOLGOZÁSA
         if self.gpx_file:
             try:
                 self.gpx_file.open() # Kinyitjuk olvasásra
@@ -125,24 +167,42 @@ class Track(models.Model):
                         start_pt = gpx.tracks[0].segments[0].points[0]
                         self.lat = start_pt.latitude
                         self.lon = start_pt.longitude
-                    # Ha nincs track, próbáljuk route-ként (biztonsági tartalék)
+                    # Ha nincs track, próbáljuk route-ként
                     elif gpx.routes and gpx.routes[0].points:
                         start_pt = gpx.routes[0].points[0]
                         self.lat = start_pt.latitude
                         self.lon = start_pt.longitude
 
-                # --- A JAVÍTÁS LÉNYEGE ---
-                # self.gpx_file.close()  <-- EZT TÖRÖLD KI!
-
-                # Helyette tekerjük vissza a "szalagot" az elejére,
-                # hogy a Django (super().save) az elejétől tudja elmenteni a fájlt:
+                # Visszatekerjük a fájlt mentés előtt
                 self.gpx_file.seek(0)
 
             except Exception as e:
                 print(f"GPX feldolgozási hiba: {e}")
 
-        # Itt történik a tényleges mentés, ehhez kell, hogy nyitva legyen a fájl!
         super().save(*args, **kwargs)
+
+# ---------------------------------------------------------
+# FONTOS: Ne felejtsd el hozzáadni az ÚJ LiveRun modellt is
+# a fájl végéhez (a Track és Result osztályok után)!
+# ---------------------------------------------------------
+
+class LiveRun(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='live_run')
+    track = models.ForeignKey(Track, on_delete=models.CASCADE)
+    start_time = models.DateTimeField(auto_now_add=True)
+    last_update = models.DateTimeField(auto_now=True)
+    current_distance = models.IntegerField(default=0) # Méterben
+
+    # --- ÚJ MEZŐ: STÁTUSZ ---
+    STATUS_CHOICES = [
+        ('running', 'Fut'),
+        ('paused', 'Megállt'),
+        ('finished', 'Célbaért'),
+    ]
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='running')
+
+    def __str__(self):
+        return f"{self.user.username} ({self.status}) - {self.track.name} ({self.current_distance}m)"
 
 class Result(models.Model):
     # ... (A Result modell változatlan maradhat)
