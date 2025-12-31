@@ -685,7 +685,7 @@ async function performLogout() {
     }
 }
 
-// 3. Segédfüggvény a Cookie olvasáshoz (Ha ez még nincs benne a fájlban, mindenképp kell!)
+// 3. Segédfüggvény a Cookie olvasáshoz
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -703,11 +703,138 @@ function getCookie(name) {
 
 window.addNewResult = handleResultSubmit;
 
-document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Először megvárjuk, hogy a rendszer ellenőrizze, be vagy-e lépve
-    await checkAuthStatus();
+// --- LIVE TRACKER LOGIKA (DASHBOARD - VEVŐ) ---
 
-    // 2. Csak ezután töltjük be a pályákat és az eredményeket
-    // Így a loadResults függvény már látni fogja a 'currentUser'-t
+// JAVÍTÁS: Kezdetben null érték, hogy ne dobjon hibát ott, ahol nincs Leaflet betöltve!
+let liveLayer = null;
+let activeLiveLine = null;
+
+async function updateLiveRunners() {
+    // Ha nincs Live Runner lista a DOM-ban (pl. nem a dashboardon vagyunk), kilépünk
+    if (!document.getElementById('live-runners-list')) return;
+
+    try {
+        const res = await fetch('/api/live/active/');
+        const runners = await res.json();
+
+        const list = document.getElementById('live-runners-list');
+        list.innerHTML = runners.length ? '' : '<div style="color:#64748b; font-size:0.8rem; font-style:italic;">Nincs aktív futó.</div>';
+
+        // JAVÍTÁS: Csak akkor nyúlunk a térképhez, ha a Leaflet (L) és a térkép (map) is létezik
+        if(typeof map !== 'undefined' && map && typeof L !== 'undefined') {
+            if (!liveLayer) {
+                liveLayer = L.layerGroup(); // Csak itt hozzuk létre!
+            }
+            liveLayer.clearLayers();
+            liveLayer.addTo(map);
+        }
+
+        runners.forEach(r => {
+            // STÁTUSZ LOGIKA
+            let statusText = `${r.distance} méternél`;
+            let statusColor = "var(--neon-blue)";
+            let cardBorder = "var(--neon-blue)";
+            let iconHtml = '<i class="fas fa-running" style="color:white; font-size:14px;"></i>';
+            let pulseClass = 'runner-pulse-icon'; // Alap kék/pink lüktetés
+
+            if (r.status === 'paused') {
+                statusText = `Megállt (${r.distance}m)`;
+                statusColor = "var(--neon-orange)"; // Narancs
+                cardBorder = "var(--neon-orange)";
+                pulseClass = 'runner-pulse-icon paused'; // Ezt majd CSS-ben átírhatjuk sárgára
+                iconHtml = '<i class="fas fa-pause" style="color:white; font-size:12px;"></i>';
+            }
+            else if (r.status === 'finished') {
+                statusText = `CÉLBAÉRT! 🏆`;
+                statusColor = "var(--neon-gold)"; // Arany
+                cardBorder = "var(--neon-gold)";
+                pulseClass = 'runner-pulse-icon finished';
+                iconHtml = '<i class="fas fa-flag-checkered" style="color:black; font-size:14px;"></i>';
+            }
+
+            // 1. KÁRTYA
+            let card = document.createElement('div');
+            card.className = 'live-runner-card';
+            // Egyedi keretszín a státusz alapján
+            card.style.borderLeft = `3px solid ${cardBorder}`;
+
+            card.innerHTML = `
+                <div style="font-weight:bold; color:#fff;">${r.full_name}</div>
+                <div style="font-size:0.8rem; color:#94a3b8;">${r.track_name}</div>
+                <div style="font-size:0.9rem; margin-top:5px; font-weight:bold; color:${statusColor};">
+                    <i class="fas fa-map-marker-alt"></i> ${statusText}
+                </div>
+            `;
+            card.onclick = () => focusLiveRunner(r);
+            list.appendChild(card);
+
+            // 2. MARKER (Státuszfüggő ikonnal)
+            if(r.position && typeof map !== 'undefined' && map && typeof L !== 'undefined') {
+                if (!liveLayer) { liveLayer = L.layerGroup(); liveLayer.addTo(map); }
+
+                let icon = L.divIcon({
+                    className: pulseClass, // Használjuk a státusz osztályt
+                    html: iconHtml,
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+
+                L.marker([r.position.lat, r.position.lon], {icon: icon})
+                 .bindPopup(`<b style="color:black">${r.full_name}</b><br>${statusText}`)
+                 .addTo(liveLayer);
+            }
+        });
+
+    } catch(e) {
+        console.error("Live update hiba:", e);
+    }
+}
+
+async function focusLiveRunner(runner) {
+    if(typeof map === 'undefined' || !map) return;
+
+    // 1. Megkeressük a pályát a memóriában lévő adatok között
+    // (A tracksData-t már betöltötte az initTracks függvény)
+    const track = tracksData.find(t => t.id === runner.track_id);
+
+    // 2. Ha van korábbi útvonal berajzolva, töröljük
+    if (activeLiveLine) {
+        map.removeLayer(activeLiveLine);
+        activeLiveLine = null;
+    }
+
+    // 3. Ha megvan a pálya és vannak koordináták, berajzoljuk
+    if (track && track.coordinates && track.coordinates.length > 0) {
+        activeLiveLine = L.polyline(track.coordinates, {
+            color: '#bc13fe',       // Neon Lila (hogy különbözzön a sima pályanézegetőtől)
+            weight: 5,              // Kicsit vastagabb
+            opacity: 0.8,
+            lineJoin: 'round',
+            dashArray: '10, 10',    // Opcionális: szaggatott vonal, ami "aktív" hatást kelt
+            className: 'anim-dash'  // Ha akarsz CSS animációt rá (lásd lentebb)
+        }).addTo(map);
+    }
+
+    // 4. Térkép fókuszálása a futóra (zoomolás)
+    if(runner.position) {
+        // Finom animált repülés a futóhoz
+        map.flyTo([runner.position.lat, runner.position.lon], 16, {
+            animate: true,
+            duration: 1.5
+        });
+    } else if (activeLiveLine) {
+        // Ha nincs futó pozíció (bár kéne legyen), akkor a pályára igazítjuk
+        map.fitBounds(activeLiveLine.getBounds());
+    }
+}
+
+// Polling indítása
+setInterval(updateLiveRunners, 5000);
+
+// --- INICIALIZÁLÁS ---
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuthStatus();
     initTracks();
+    updateLiveRunners();
 });
