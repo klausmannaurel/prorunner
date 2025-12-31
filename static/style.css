@@ -781,3 +781,151 @@ select#track-select option {
 .hidden {
     display: none !important;
 }
+
+/* --- LIVE TRACKER STÍLUSOK --- */
+
+/* 1. Dashboard Oldalsáv Kártya */
+.live-runner-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 3px solid var(--neon-pink); /* Neon Pink jelzőcsík */
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.live-runner-card:hover {
+    background: rgba(188, 19, 254, 0.15); /* Pinkes háttér hoverkor */
+    border-color: var(--neon-pink);
+    transform: translateX(5px); /* Kicsit elmozdul jobbra */
+    box-shadow: 0 0 15px rgba(188, 19, 254, 0.2);
+}
+
+/* Kis "ÉLŐ" pötty a kártyán */
+.live-runner-card::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 8px;
+    height: 8px;
+    background-color: var(--neon-green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--neon-green);
+    animation: blinkLive 1.5s infinite;
+}
+
+@keyframes blinkLive {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* 2. Térképes Ikon (A Futó) */
+.runner-pulse-icon {
+    background-color: var(--neon-pink);
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 10px var(--neon-pink);
+    /* A régi flexes igazítást kivettük innen */
+    position: relative; /* Ez fontos az abszolút pozicionáláshoz */
+    animation: pulseRunner 1.5s infinite;
+}
+
+/* Hogy az ikon benne (a kis emberke) mindig MÉRTANI középen legyen */
+.runner-pulse-icon i {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    /* Ez a transzformáció tolja vissza a saját méretének felével, így lesz pontosan középen */
+    transform: translate(-50%, -50%) !important;
+    margin: 0; /* Biztonsági reset */
+    padding: 0;
+    line-height: 1;
+}
+
+@keyframes pulseRunner {
+    0% {
+        box-shadow: 0 0 0 0 rgba(188, 19, 254, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(188, 19, 254, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(188, 19, 254, 0);
+    }
+}
+
+
+/* Szünet ikon (Narancs/Sárga) */
+.runner-pulse-icon.paused {
+    background-color: var(--neon-orange);
+    box-shadow: 0 0 10px var(--neon-orange);
+    animation: none; /* Ne lüktessen ha áll */
+    opacity: 0.8;
+}
+
+/* Célbaért ikon (Arany) */
+.runner-pulse-icon.finished {
+    background-color: #FFD700; /* Gold */
+    border-color: #000;
+    box-shadow: 0 0 20px #FFD700;
+    animation: pulseWinner 1s infinite;
+    z-index: 1000;
+}
+
+@keyframes pulseWinner {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+    50% { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+}
+
+/* 3. Stopper Távolság Gombok */
+.distance-btn {
+    flex: 1 1 30%; /* 3 oszlopos elrendezés */
+    min-width: 80px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--neon-blue);
+    color: var(--neon-blue);
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Exo 2', sans-serif;
+    text-transform: uppercase;
+}
+
+.distance-btn:hover {
+    background: var(--neon-blue);
+    color: #000;
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+}
+
+.distance-btn.finish {
+    background: rgba(188, 19, 254, 0.1);
+    border-color: var(--neon-pink);
+    color: var(--neon-pink);
+    flex-basis: 100%; /* Teljes szélesség */
+    margin-top: 5px;
+}
+
+.distance-btn.finish:hover {
+    background: var(--neon-pink);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(188, 19, 254, 0.5);
+}
+
+/* Mozgó szaggatott vonal a Live Trackerhez */
+.anim-dash {
+    animation: dash-move 30s linear infinite;
+}
+
+@keyframes dash-move {
+    to {
+        stroke-dashoffset: -1000;
+    }
+}
