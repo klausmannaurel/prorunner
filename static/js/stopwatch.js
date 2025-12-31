@@ -32,6 +32,7 @@ async function loadTracksForSelect() {
     try {
         const response = await fetch('/api/tracks/');
         const tracks = await response.json();
+        window.tracksData = tracks;
 
         trackSelect.innerHTML = '<option value="" disabled selected>Válassz pályát a méréshez...</option>';
 
@@ -65,7 +66,7 @@ function formatTime(ms, forDisplay = false) {
         if (h > 0) return `${hStr}:${m}:${s}:${msStr}`;
         return `${m}:${s}:${msStr}`; // Kijelzőn: MM:SS:ms
     } else {
-        // Mentéshez (ADATBÁZIS - MAX 10 KARAKTER!): 
+        // Mentéshez (ADATBÁZIS - MAX 10 KARAKTER!):
         // A trükk: Ha nincs óra, levágjuk az elejét, hogy beférjen.
 
         if (h > 0) {
@@ -107,7 +108,7 @@ function startTimer() {
     timerInterval = setInterval(updateDisplay, 10);
     isRunning = true;
 
-    // UI
+    // UI Módosítások
     btnStart.classList.add('hidden');
     btnStop.classList.remove('hidden');
     btnLap.disabled = false;
@@ -118,6 +119,29 @@ function startTimer() {
     statusBadge.textContent = "FUTÁS...";
     statusBadge.style.background = "rgba(57, 255, 20, 0.2)";
     statusBadge.style.color = "var(--neon-green)";
+
+    // --- LIVE TRACKER INDÍTÁSA / FOLYTATÁSA ---
+    const tId = trackSelect.value;
+
+    // 1. Csak akkor generáljuk újra a gombokat, ha üres a tároló
+    // (Így "Folytatás"-nál nem villan vagy tűnik el a már megnyomott gomb)
+    const container = document.getElementById('distance-buttons-container');
+    if (container && container.children.length === 0) {
+        if (typeof generateDistanceButtons === 'function') {
+            generateDistanceButtons(tId);
+        }
+    }
+
+    // 2. Megjelenítjük a panelt
+    const liveControls = document.getElementById('live-controls');
+    if (liveControls) liveControls.classList.remove('hidden');
+
+    // 3. Jelezzük a szervernek (Start vagy Resume)
+    fetch('/api/live/start/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+        body: JSON.stringify({ track_id: tId })
+    }).catch(err => console.error("Live start error:", err));
 }
 
 function stopTimer() {
@@ -130,7 +154,6 @@ function stopTimer() {
     if (currentTotal > lastLapTime) {
         const fragmentMs = currentTotal - lastLapTime;
         if (fragmentMs > 100) {
-            // Itt is Display módot használunk a megjelenítéshez
             const lapTimeStr = formatTime(fragmentMs, true);
             const totalTimeStr = formatTime(currentTotal, true);
             const nextIndex = laps.length + 1;
@@ -147,7 +170,7 @@ function stopTimer() {
         }
     }
 
-    // UI
+    // UI Módosítások
     btnStop.classList.add('hidden');
     btnStart.classList.remove('hidden');
     btnStart.innerHTML = '<i class="fas fa-play"></i> Folytatás';
@@ -155,9 +178,17 @@ function stopTimer() {
     btnReset.disabled = false;
     saveSection.classList.remove('hidden');
 
-    statusBadge.textContent = "MEGÁLLÍTVA";
-    statusBadge.style.background = "rgba(255, 71, 87, 0.2)";
-    statusBadge.style.color = "#ff4757";
+    statusBadge.textContent = "SZÜNET";
+    statusBadge.style.background = "rgba(255, 159, 67, 0.2)";
+    statusBadge.style.color = "var(--neon-orange)";
+
+    // --- LIVE TRACKER: CSAK SZÜNETELTETÉS ---
+    // NEM rejtjük el a gombokat, hogy folytatni lehessen!
+    // A szervernek 'paused' státuszt küldünk.
+    fetch('/api/live/pause/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken')}
+    }).catch(err => console.error("Live pause error:", err));
 }
 
 function resetTimer() {
@@ -182,6 +213,22 @@ function resetTimer() {
     statusBadge.textContent = "VÁRAKOZÁS";
     statusBadge.style.background = "rgba(255,255,255,0.1)";
     statusBadge.style.color = "white";
+
+    // --- LIVE TRACKER: TÉNYLEGES TÖRLÉS ---
+
+    // 1. Töröljük a gombokat a felületről
+    const container = document.getElementById('distance-buttons-container');
+    if(container) container.innerHTML = '';
+
+    // 2. Elrejtjük a panelt
+    const liveControls = document.getElementById('live-controls');
+    if (liveControls) liveControls.classList.add('hidden');
+
+    // 3. Jelezzük a szervernek a végső törlést (DELETE)
+    fetch('/api/live/stop/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken')}
+    }).catch(err => console.error("Live reset error:", err));
 }
 
 function recordLap() {
@@ -241,7 +288,7 @@ async function saveSession() {
         // Itt használjuk a FALSE paramétert, hogy a backend helyes formátumot kapjon
         lap_times: finalLaps.map(l => {
             // Ha a listában már a 'display' formátum van, újra kell számolni a rawLap-ból
-            // VAGY: ha a lapObj-ben csak a string van, konvertáljuk. 
+            // VAGY: ha a lapObj-ben csak a string van, konvertáljuk.
             // Egyszerűbb, ha a rawLap alapján generáljuk újra a helyes stringet:
             if (l.rawLap) return formatTime(l.rawLap, false);
             // Ha az utolsó töredék (ami most lett hozzáadva), az már helyes string lehet
@@ -282,6 +329,44 @@ async function saveSession() {
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
+}
+
+async function sendLiveUpdate(m) {
+    await fetch('/api/live/update/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+        body: JSON.stringify({distance: m})
+    });
+    // Kis vizuális visszajelzés
+    const status = document.getElementById('timer-status');
+    const orig = status.textContent;
+    status.textContent = `POZÍCIÓ: ${m}m`;
+    setTimeout(() => status.textContent = orig, 2000);
+}
+
+function generateDistanceButtons(trackId) {
+    const track = window.tracksData ? window.tracksData.find(t => t.id === trackId) : null;
+    if(!track) return;
+
+    const lenM = track.distance_km_per_lap * 1000;
+    const container = document.getElementById('distance-buttons-container');
+    container.innerHTML = '';
+
+    let step = lenM <= 400 ? 100 : 500; // 400m-es pályán sűrűbb gombok
+
+    for(let d = step; d < lenM; d += step) {
+        let btn = document.createElement('button');
+        btn.className = 'distance-btn';
+        btn.innerText = d + 'm';
+        btn.onclick = () => sendLiveUpdate(d);
+        container.appendChild(btn);
+    }
+    // Cél gomb
+    let btnEnd = document.createElement('button');
+    btnEnd.className = 'distance-btn finish';
+    btnEnd.innerHTML = '<i class="fas fa-flag-checkered"></i> KÖR VÉGE';
+    btnEnd.onclick = () => sendLiveUpdate(lenM);
+    container.appendChild(btnEnd);
 }
 
 function getCookie(name) {
