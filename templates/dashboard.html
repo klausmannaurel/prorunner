@@ -17,9 +17,17 @@
                     </select>
                 </div>
             </div>
-            
+
             <div id="track-image-wrapper">
                 <img id="track-image" src="" alt="Pálya fotó">
+            </div>
+
+            <div class="sidebar-section" style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                <h3 style="color:var(--neon-pink); padding:0 20px; margin:10px 0; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-satellite-dish"></i> ÉLŐ FUTÁSOK
+                </h3>
+                <div id="live-runners-list" style="padding: 0 20px;">
+                </div>
             </div>
 
             <div id="results-container" class="results-list-container">
@@ -51,7 +59,7 @@
                 <div id="overlay-features" class="overlay-features-row">
                 </div>
             </div>
-            
+
             <div id="map"></div>
         </main>
     </div>
@@ -67,7 +75,7 @@
                 <button onclick="closeModal('admin-modal')" style="background:none; border:none; font-size:1.2rem; cursor:pointer;"><i class="fas fa-times"></i></button>
             </div>
             <div class="admin-form">
-                
+
                 <div class="form-group">
                     <label>Pálya</label>
                     <div style="position:relative;">
@@ -89,7 +97,7 @@
                     <label>Futás Dátuma</label>
                     <input type="date" id="input-date" class="form-control">
                 </div>
-                
+
                 <div class="form-group">
                     <label>Körök</label>
                     <input type="number" id="input-laps" class="form-control" value="1" min="1" readonly style="background:rgba(255,255,255,0.1); color:white;">
@@ -98,7 +106,7 @@
                 <div class="form-group">
                     <label>Köridők (perc:mp)</label>
                     <div id="laps-container" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px; padding-right:5px;"></div>
-                    
+
                     <button type="button" class="btn-secondary" onclick="addLapInput()" style="width:100%; border:1px dashed var(--glass-border); color:var(--text-muted); background:none; padding:8px; border-radius:8px; cursor:pointer; font-size:0.9rem;">
                         <i class="fas fa-plus"></i> Új kör hozzáadása
                     </button>
