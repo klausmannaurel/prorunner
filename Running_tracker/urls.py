@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from results import views # Feltételezem, hogy 'results' az app neve. Ha más, írd át!
+from results import views
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -16,19 +16,10 @@ urlpatterns = [
     path('stopwatch/', views.stopwatch, name='stopwatch'),
 
     # --- HTML OLDALAK ---
-
-    # 1. FŐOLDAL: A Landing Page (index.html)
     path('', views.home, name='home'),
-
-    # 2. DASHBOARD: A Térképes nézet (dashboard.html)
     path('dashboard/', views.dashboard, name='dashboard'),
-
-    # 3. ÚJ: SAJÁT EREDMÉNYEK (my_results.html)
-    # Ez köti össze a /my-results/ URL-t a views.py-ban lévő my_results függvénnyel
     path('my-results/', views.my_results, name='my_results'),
     path('results/runner/<str:runner_name>/', views.runner_results, name='runner_results'),
-
-    # 4. PÁLYÁK: A kártyás lista (tracks.html)
     path('tracks/', views.tracks, name='tracks'),
 
 
@@ -50,10 +41,18 @@ urlpatterns = [
     # Eredmények listázása Pálya ID alapján
     path('api/results/<str:track_id>/', views.result_list, name='result-list'),
 
-    # Router a pályákhoz (api/tracks/)
-    path('api/', include(router.urls)),
-
+    # Értékelések
     path('api/tracks/<str:track_id>/reviews/', views.track_reviews, name='track-reviews'),
+
+    # --- ÚJ: LIVE TRACKER API VÉGPONTOK (IDE SZÚRD BE) ---
+    path('api/live/start/', views.start_live_run, name='live-start'),
+    path('api/live/update/', views.update_live_distance, name='live-update'),
+    path('api/live/stop/', views.stop_live_run, name='live-stop'),
+    path('api/live/active/', views.get_active_runners, name='live-active'),
+    path('api/live/pause/', views.pause_live_run, name='live-pause'),
+
+    # Router a pályákhoz (api/tracks/) - Ez maradhat a végén
+    path('api/', include(router.urls)),
 ]
 
 # --- MÉDIA FÁJLOK KISZOLGÁLÁSA (Képekhez) ---
