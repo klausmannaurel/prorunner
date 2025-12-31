@@ -7,6 +7,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from django.views.decorators.csrf import ensure_csrf_cookie
+from .models import LiveRun
 
 # --- STATISZTIKAI IMPORTOK ---
 from django.db.models import Avg, Count
@@ -69,6 +70,99 @@ class TrackViewSet(viewsets.ModelViewSet):
 
 # --- 4. API: ÉRTÉKELÉSEK KEZELÉSE ---
 
+# --- LIVE TRACKER APIK ---
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def start_live_run(request):
+    """Futás indítása VAGY Folytatása"""
+    track_id = request.data.get('track_id')
+
+    # Megpróbáljuk lekérni, vagy létrehozni, ha nincs
+    # Így ha véletlenül újratöltöd az oldalt, nem veszik el a futásod
+    run, created = LiveRun.objects.get_or_create(
+        user=request.user,
+        defaults={
+            'track_id': track_id,
+            'current_distance': 0,
+            'status': 'running'
+        }
+    )
+
+    # Ha már létezett (tehát folytatás), és nem 'finished', akkor állítsuk 'running'-ra
+    if not created:
+        if run.status != 'finished':
+            run.status = 'running'
+            run.save()
+
+    return Response({"status": "started", "is_resumed": not created})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def pause_live_run(request):
+    """Szünet (Stopper Stop gomb) - NEM TÖRLI AZ ADATOT!"""
+    try:
+        run = LiveRun.objects.get(user=request.user)
+        # Csak akkor állítjuk megálltra, ha nem végzett
+        if run.status != 'finished':
+            run.status = 'paused'
+            run.save()
+        return Response({"status": "paused"})
+    except LiveRun.DoesNotExist:
+        return Response({"status": "no_run"})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_live_distance(request):
+    """Távolság frissítése és Célbaérés figyelése"""
+    try:
+        distance = int(request.data.get('distance'))
+        run = LiveRun.objects.get(user=request.user)
+        run.current_distance = distance
+
+        # Pálya hossza méterben
+        track_len_m = run.track.distance_km_per_lap * 1000
+
+        # Ha elértük vagy túlléptük a hosszt -> FINISHED
+        if distance >= track_len_m:
+            run.status = 'finished'
+        else:
+            # Ha futás közben nyomkodja a gombot, és 'paused' volt, váltson vissza 'running'-ra
+            if run.status == 'paused':
+                run.status = 'running'
+
+        run.save()
+        return Response({"status": "updated", "run_status": run.status})
+    except LiveRun.DoesNotExist:
+        return Response({"error": "Nincs futás"}, status=404)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def stop_live_run(request):
+    """Végleges törlés (Stopper Reset gomb)"""
+    LiveRun.objects.filter(user=request.user).delete()
+    return Response({"status": "stopped"})
+
+@api_view(['GET'])
+def get_active_runners(request):
+    """Dashboardnak: Ki fut éppen, hol és milyen státuszban?"""
+    # Az elmúlt 1 órában aktív futások (hogy a 'finished' is látszódjon egy darabig)
+    cutoff = timezone.now() - timezone.timedelta(hours=1)
+    runs = LiveRun.objects.filter(last_update__gte=cutoff)
+
+    data = []
+    for run in runs:
+        coords = run.track.get_lat_lon_at_distance(run.current_distance)
+        data.append({
+            'full_name': run.user.get_full_name() or run.user.username,
+            'track_id': run.track.id,
+            'track_name': run.track.name,
+            'distance': run.current_distance,
+            'position': coords,
+            'status': run.status # Fontos: ezt is küldjük a színezéshez!
+        })
+    return Response(data)
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def track_reviews(request, track_id):
@@ -76,17 +170,17 @@ def track_reviews(request, track_id):
     GET: Visszaadja a pálya értékeléseit + átlagot + darabszámot.
     POST: Új értékelés mentése (Napi 1 limit/user/pálya).
     """
-    
+
     # 1. GET: Listázás és Statisztika
     if request.method == 'GET':
         reviews = TrackReview.objects.filter(track_id=track_id)
         serializer = TrackReviewSerializer(reviews, many=True)
-        
+
         # Statisztikák számolása
         stats = reviews.aggregate(Avg('rating'), Count('id'))
         average = stats['rating__avg'] or 0
         count = stats['id__count'] or 0
-        
+
         return Response({
             'reviews': serializer.data,
             'average_rating': round(average, 1),
@@ -101,26 +195,26 @@ def track_reviews(request, track_id):
         # --- KORLÁTOZÁS: Napi 1 értékelés ---
         today = timezone.now().date()
         existing_review = TrackReview.objects.filter(
-            user=request.user, 
-            track_id=track_id, 
+            user=request.user,
+            track_id=track_id,
             created_at__date=today
         ).exists()
 
         if existing_review:
             return Response(
-                {"message": "Ma már értékelted ezt a pályát! Holnap újra próbálhatod."}, 
+                {"message": "Ma már értékelted ezt a pályát! Holnap újra próbálhatod."},
                 status=400
             )
 
         # Adatok mentése
         data = request.data.copy()
         data['track'] = track_id # A track ID-t az URL-ből vesszük
-        
+
         serializer = TrackReviewSerializer(data=data)
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(serializer.data, status=201)
-        
+
         return Response(serializer.errors, status=400)
 
 # --- 5. API: EREDMÉNYEK KEZELÉSE ---
