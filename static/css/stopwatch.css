@@ -24,6 +24,9 @@
 .neon-select {
     width: 100%;
     padding: 15px;
+    /* Hagyunk helyet jobb oldalt az új ikonnak, hogy a szöveg ne lógjon rá */
+    padding-right: 45px;
+
     background: rgba(20, 25, 40, 0.8);
     border: 1px solid var(--neon-blue);
     color: white;
@@ -32,6 +35,14 @@
     backdrop-filter: blur(5px);
     box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
     outline: none;
+
+    /* --- EZ A LÉNYEG: A gyári nyíl eltüntetése --- */
+    appearance: none;
+    -webkit-appearance: none; /* Safari/Chrome */
+    -moz-appearance: none;    /* Firefox */
+
+    /* Hogy az egérmutató kéz legyen */
+    cursor: pointer;
 }
 
 /* Kijelző Kártya */
