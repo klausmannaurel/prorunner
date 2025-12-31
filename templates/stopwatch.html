@@ -11,10 +11,13 @@
 
     <div class="stopwatch-header">
         <h2><i class="fas fa-running"></i> Live Tracker</h2>
-        <div class="track-selector-wrapper">
+        <div class="track-selector-wrapper" style="position: relative;">
+            <i class="fas fa-chevron-down"
+                style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--neon-blue); pointer-events: none; z-index: 10;">
+            </i>
             <select id="sw-track-select" class="neon-select">
                 <option value="" disabled selected>Válassz pályát a méréshez...</option>
-                </select>
+            </select>
         </div>
     </div>
 
@@ -30,6 +33,14 @@
         <button id="btn-lap" class="btn-neon lap" disabled><i class="fas fa-flag-checkered"></i> Kör</button>
         <button id="btn-stop" class="btn-neon stop hidden"><i class="fas fa-pause"></i> Stop</button>
         <button id="btn-reset" class="btn-neon reset" disabled><i class="fas fa-undo"></i> Reset</button>
+    </div>
+
+    <div id="live-controls" class="hidden" style="margin-bottom: 30px; animation: fadeIn 0.5s;">
+        <div style="text-align:center; margin-bottom:10px; color:var(--text-muted); font-size:0.9rem;">
+            <i class="fas fa-satellite-dish" style="color:var(--neon-pink);"></i> LIVE TRACKER: Hol tartasz?
+        </div>
+        <div id="distance-buttons-container" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+        </div>
     </div>
 
     <div class="laps-wrapper hidden" id="laps-wrapper">
