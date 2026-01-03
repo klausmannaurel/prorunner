@@ -1,3 +1,4 @@
+
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
@@ -50,6 +51,7 @@ urlpatterns = [
     path('api/live/stop/', views.stop_live_run, name='live-stop'),
     path('api/live/active/', views.get_active_runners, name='live-active'),
     path('api/live/pause/', views.pause_live_run, name='live-pause'),
+    path('api/live/gps-update/', views.update_gps_position, name='live-gps-update'),
 
     # Router a pályákhoz (api/tracks/) - Ez maradhat a végén
     path('api/', include(router.urls)),
