@@ -1,19 +1,16 @@
+
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import LiveRun
-
-# --- STATISZTIKAI IMPORTOK ---
 from django.db.models import Avg, Count
 from django.utils import timezone
-
-# --- MODELLEK ÉS SERIALIZEREK ---
 from .models import Track, Result, Profile, TrackReview
 from .serializers import TrackSerializer, ResultSerializer, TrackReviewSerializer
 
@@ -339,6 +336,56 @@ def api_register(request):
     except Exception as e:
         print(f"Regisztrációs hiba: {e}")
         return Response({"message": "Hiba történt a regisztráció során."}, status=500)
+
+@api_view(['POST'])
+@permission_classes([AllowAny]) # Bárki hívhatja (óra miatt kell)
+def update_gps_position(request):
+    """
+    Az Apple Watch ide küldi a {lat: ..., lon: ..., username: ...} adatot.
+    """
+    lat = request.data.get('lat')
+    lon = request.data.get('lon')
+    username = request.data.get('username') # Ezt is várjuk az órától!
+
+    if lat is None or lon is None or username is None:
+        return Response({"error": "Hiányzó adatok (lat, lon vagy username)"}, status=400)
+
+    try:
+        # 1. Megkeressük a felhasználót név alapján
+        user = User.objects.get(username=username)
+
+        # 2. Megkeressük az aktív futását
+        run = LiveRun.objects.get(user=user)
+
+        # 3. Ha már célbaért, ne frissítsünk
+        if run.status == 'finished':
+             return Response({"status": "finished", "message": "A futás már véget ért."})
+
+        # 4. Pálya távolság kiszámolása a koordinátából (Map Matching)
+        matched_distance = run.track.get_distance_from_lat_lon(float(lat), float(lon))
+
+        # 5. Frissítés
+        run.current_distance = matched_distance
+        run.status = 'running' # Visszaváltunk futásra
+
+        # Célbaérés vizsgálata (ha 95%-nál jár, tekintsük késznek a GPS pontatlanság miatt)
+        track_len_m = run.track.distance_km_per_lap * 1000
+        if matched_distance >= track_len_m * 0.95:
+             run.status = 'finished'
+
+        run.save()
+
+        return Response({
+            "status": "updated",
+            "distance": matched_distance
+        })
+
+    except User.DoesNotExist:
+        return Response({"error": "Hibás felhasználónév"}, status=404)
+    except LiveRun.DoesNotExist:
+        return Response({"error": "Nincs aktív futásod. Indítsd el előbb a weboldalon!"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
 
 @login_required(login_url='home')
 def my_results(request):
