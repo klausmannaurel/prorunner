@@ -181,6 +181,53 @@ class Track(models.Model):
 
         super().save(*args, **kwargs)
 
+    def get_distance_from_lat_lon(self, runner_lat, runner_lon):
+        """
+        Megkeresi a GPX útvonalon azt a pontot, ami a legközelebb van a futó
+        aktuális GPS pozíciójához, és visszaadja, hogy az hányadik méter a starttól.
+        """
+        if not self.gpx_file:
+            return 0
+
+        try:
+            self.gpx_file.open()
+            import gpxpy # Biztos ami biztos, importáljuk itt is, vagy a fájl elején
+            gpx = gpxpy.parse(self.gpx_file)
+            # FONTOS: Visszatekerjük a fájlt az elejére, különben a következő olvasásnál üres lesz!
+            self.gpx_file.seek(0)
+
+            best_distance = 0
+            min_diff = float('inf') # Végtelen kezdeti távolság
+
+            current_track_dist = 0
+            prev_point = None
+
+            # Végigmegyünk a pálya összes pontján
+            for track in gpx.tracks:
+                for segment in track.segments:
+                    for point in segment.points:
+                        # 1. Távolság frissítése a pályán (Starttól mért távolság)
+                        if prev_point:
+                            step = point.distance_2d(prev_point)
+                            current_track_dist += step
+
+                        # 2. Távolság a futó és a pont között
+                        # (A gpxpy saját típusát használjuk a számoláshoz)
+                        dist_to_runner = point.distance_2d(gpxpy.gpx.GPXTrackPoint(runner_lat, runner_lon))
+
+                        # 3. Ha ez a pont közelebb van a futóhoz, mint eddig bármi, akkor ez a nyerő
+                        if dist_to_runner < min_diff:
+                            min_diff = dist_to_runner
+                            best_distance = current_track_dist
+
+                        prev_point = point
+
+            return int(best_distance) # Méterben adjuk vissza
+
+        except Exception as e:
+            print(f"Map matching hiba: {e}")
+            return 0
+
 # ---------------------------------------------------------
 # FONTOS: Ne felejtsd el hozzáadni az ÚJ LiveRun modellt is
 # a fájl végéhez (a Track és Result osztályok után)!
