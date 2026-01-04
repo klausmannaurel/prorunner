@@ -10,6 +10,7 @@ from django.core.files.base import ContentFile
 import os
 import gpxpy
 import math
+import json
 
 class Track(models.Model):
     """
@@ -183,73 +184,93 @@ class Track(models.Model):
 
     def get_distance_from_lat_lon(self, runner_lat, runner_lon):
         """
-        Megkeresi a GPX útvonalon azt a pontot, ami a legközelebb van a futó
-        aktuális GPS pozíciójához, és visszaadja, hogy az hányadik méter a starttól.
+        Map Matching: Megkeresi a GPX útvonalon a legközelebbi pontot,
+        és visszaadja a starttól mért távolságot (float).
         """
         if not self.gpx_file:
-            return 0
+            return 0.0  # Módosítva: 0 -> 0.0
 
         try:
             self.gpx_file.open()
-            import gpxpy # Biztos ami biztos, importáljuk itt is, vagy a fájl elején
+            # Az import gpxpy maradhat itt is, vagy a fájl elején
+            import gpxpy
             gpx = gpxpy.parse(self.gpx_file)
-            # FONTOS: Visszatekerjük a fájlt az elejére, különben a következő olvasásnál üres lesz!
             self.gpx_file.seek(0)
 
-            best_distance = 0
-            min_diff = float('inf') # Végtelen kezdeti távolság
+            best_distance = 0.0
+            min_diff = float('inf')
 
-            current_track_dist = 0
+            current_track_dist = 0.0
             prev_point = None
 
-            # Végigmegyünk a pálya összes pontján
             for track in gpx.tracks:
                 for segment in track.segments:
                     for point in segment.points:
-                        # 1. Távolság frissítése a pályán (Starttól mért távolság)
+                        # 1. Pálya távolság növelése
                         if prev_point:
                             step = point.distance_2d(prev_point)
                             current_track_dist += step
 
-                        # 2. Távolság a futó és a pont között
-                        # (A gpxpy saját típusát használjuk a számoláshoz)
+                        # 2. Távolság mérése a futótól
                         dist_to_runner = point.distance_2d(gpxpy.gpx.GPXTrackPoint(runner_lat, runner_lon))
 
-                        # 3. Ha ez a pont közelebb van a futóhoz, mint eddig bármi, akkor ez a nyerő
                         if dist_to_runner < min_diff:
                             min_diff = dist_to_runner
                             best_distance = current_track_dist
 
                         prev_point = point
 
-            return int(best_distance) # Méterben adjuk vissza
+            return float(best_distance) # Módosítva: int() helyett float()
 
         except Exception as e:
             print(f"Map matching hiba: {e}")
-            return 0
+            return 0.0 # Módosítva: 0 -> 0.0
 
-# ---------------------------------------------------------
-# FONTOS: Ne felejtsd el hozzáadni az ÚJ LiveRun modellt is
-# a fájl végéhez (a Track és Result osztályok után)!
-# ---------------------------------------------------------
 
+# --- LIVE RUN MODELL BŐVÍTÉSE ---
 class LiveRun(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='live_run')
     track = models.ForeignKey(Track, on_delete=models.CASCADE)
-    start_time = models.DateTimeField(auto_now_add=True)
-    last_update = models.DateTimeField(auto_now=True)
-    current_distance = models.IntegerField(default=0) # Méterben
 
-    # --- ÚJ MEZŐ: STÁTUSZ ---
+    # Időzítés
+    start_time = models.DateTimeField(null=True, blank=True) # Csak induláskor állítjuk be
+    last_update = models.DateTimeField(auto_now=True)
+
+    # Távolság és Célok
+    current_distance = models.FloatField(default=0.0) # float a pontosabb számoláshoz
+    target_laps = models.IntegerField(default=1)      # Hány körre terveztünk?
+
+    # Telemetria (ÚJ MEZŐK)
+    current_speed = models.FloatField(default=0.0)    # km/h
+    current_pace = models.CharField(max_length=10, default="-:--") # p/km (pl. "5:30")
+    progress_percent = models.FloatField(default=0.0) # 0-100%
+
+    # Kör kezelés
+    current_lap = models.IntegerField(default=0)      # 0 = Még nem indult el
+    current_lap_start = models.DateTimeField(null=True, blank=True) # Mikor kezdte az aktuális kört
+
+    # Naplózás (JSON stringként tároljuk a részidőket)
+    lap_times_log = models.TextField(default="[]", blank=True)
+
     STATUS_CHOICES = [
+        ('ready', 'Rajtra Kész'),  # ÚJ: Várja az első GPS jelet
         ('running', 'Fut'),
         ('paused', 'Megállt'),
         ('finished', 'Célbaért'),
     ]
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='running')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ready')
 
     def __str__(self):
-        return f"{self.user.username} ({self.status}) - {self.track.name} ({self.current_distance}m)"
+        return f"{self.user.username} - {self.status} ({self.current_distance:.1f}m)"
+
+    def add_lap_log(self, lap_time_str):
+        """Segédfüggvény köridő hozzáadásához a JSON mezőhöz"""
+        try:
+            logs = json.loads(self.lap_times_log or "[]")
+            logs.append(lap_time_str)
+            self.lap_times_log = json.dumps(logs)
+        except:
+            self.lap_times_log = json.dumps([lap_time_str])
 
 class Result(models.Model):
     # ... (A Result modell változatlan maradhat)
