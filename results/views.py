@@ -32,6 +32,26 @@ def stopwatch(request):
     """A Stopper oldal renderelése."""
     return render(request, 'stopwatch.html')
 
+def calculate_pace_and_speed(distance_delta_m, time_delta_sec):
+    """
+    Kiszámolja a sebességet (km/h) és a tempót (min/km).
+    """
+    if time_delta_sec <= 0 or distance_delta_m <= 0:
+        return 0.0, "-:--"
+
+    # Sebesség: m/s -> km/h
+    speed_mps = distance_delta_m / time_delta_sec
+    speed_kmh = speed_mps * 3.6
+
+    # Pace: min/km
+    # 1000m / (m/s) = másodperc/km
+    seconds_per_km = 1000 / speed_mps
+    pace_min = int(seconds_per_km // 60)
+    pace_sec = int(seconds_per_km % 60)
+    pace_str = f"{pace_min}:{pace_sec:02d}"
+
+    return round(speed_kmh, 2), pace_str
+
 # --- 2. JOGOSULTSÁGOK (Permissions) ---
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -68,6 +88,179 @@ class TrackViewSet(viewsets.ModelViewSet):
 # --- 4. API: ÉRTÉKELÉSEK KEZELÉSE ---
 
 # --- LIVE TRACKER APIK ---
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def set_run_ready(request):
+    """
+    1. LÉPÉS: A felhasználó kiválasztja a pályát és a köröket.
+    Létrehozunk egy 'ready' státuszú futást.
+    """
+    track_id = request.data.get('track_id')
+    target_laps = int(request.data.get('target_laps', 1))
+
+    # Töröljük a korábbi beragadt futást
+    LiveRun.objects.filter(user=request.user).delete()
+
+    track = get_object_or_404(Track, id=track_id)
+
+    LiveRun.objects.create(
+        user=request.user,
+        track=track,
+        target_laps=target_laps,
+        current_distance=0,
+        status='ready',
+        lap_times_log="[]"
+    )
+
+    return Response({"status": "ready", "message": "Várakozás a rajtvonalnál (GPS jelre vár)..."})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_live_status(request):
+    """
+    A KLIENS (Böngésző) ezt hívogatja (Polling), hogy frissítse a kijelzőt.
+    Az időt NEM a böngésző méri, hanem a szerver start_time alapján számoljuk!
+    """
+    try:
+        run = LiveRun.objects.get(user=request.user)
+
+        # Eltelt idő számítása szerver oldalon
+        elapsed_seconds = 0
+        if run.start_time and run.status in ['running', 'finished']:
+            # Ha fut, akkor most - start. Ha kész, akkor last_update - start.
+            end_time = run.last_update if run.status == 'finished' else timezone.now()
+            delta = end_time - run.start_time
+            elapsed_seconds = delta.total_seconds()
+
+        return Response({
+            "status": run.status,
+            "track_name": run.track.name,
+            "current_distance": run.current_distance,
+            "total_distance": run.track.distance_km_per_lap * 1000 * run.target_laps,
+            "current_lap": run.current_lap,
+            "target_laps": run.target_laps,
+            "speed": run.current_speed,
+            "pace": run.current_pace,
+            "elapsed_seconds": elapsed_seconds, # A kliens ebből formázza az órát (HH:MM:SS)
+            "progress": run.progress_percent
+        })
+    except LiveRun.DoesNotExist:
+        return Response({"status": "idle"}, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny]) # Az óra lehet, hogy nem küld Django session cookie-t, ezért username alapú
+def update_gps_position(request):
+    """
+    A "SMART BRAIN". Az óra (vagy telefon) ide küldi a nyers koordinátát.
+    A szerver dönt: Elindítja az órát? Számol sebességet? Célba ért?
+    Payload: { lat: 47.123, lon: 19.123, username: 'user1' }
+    """
+    lat = request.data.get('lat')
+    lon = request.data.get('lon')
+    username = request.data.get('username')
+
+    if not lat or not lon or not username:
+        return Response({"error": "Hiányzó adatok"}, status=400)
+
+    try:
+        user = User.objects.get(username=username)
+        run = LiveRun.objects.get(user=user)
+        track = run.track
+
+        # Ha már célbaért, nem csinálunk semmit
+        if run.status == 'finished':
+             return Response({"status": "finished"})
+
+        now = timezone.now()
+
+        # -------------------------------------------------
+        # 1. MAP MATCHING: Hol vagyunk a pályán? (Méterben)
+        # -------------------------------------------------
+        matched_distance = track.get_distance_from_lat_lon(float(lat), float(lon))
+
+        # Pálya hossza (1 kör) méterben
+        lap_len_m = track.distance_km_per_lap * 1000
+        total_race_len_m = lap_len_m * run.target_laps
+
+        # Jelenlegi teljes táv (Körök + aktuális pozíció)
+        # Megjegyzés: A get_distance_from_lat_lon csak a körön belüli pozíciót adja (0 - lap_len)
+        # Ki kell találnunk, hogy új körbe léptünk-e.
+
+        # Egyszerűsített logika a prototípushoz:
+        # A távolságot abszolút értékben kezeljük. Ha az óra küldi a "kör" jelzést, akkor növeljük.
+        # DE a prompt szerint "Hands-free" kell.
+        # TRÜKK: Ha az előző mérés 900m volt, a mostani meg 50m, akkor kört váltottunk!
+
+        last_lap_dist = run.current_distance % lap_len_m # Hol jártunk körön belül legutóbb
+
+        # Körváltás detektálása (Ha nagyot ugrott hátrafelé a táv, pl 900m -> 10m)
+        if run.status == 'running' and last_lap_dist > (lap_len_m * 0.9) and matched_distance < (lap_len_m * 0.1):
+            run.current_lap += 1
+            # Részidő mentése logba (Opcionális)
+
+        # Tényleges kumulatív távolság számítása
+        # (current_lap - 1) * körhossz + matched_distance
+        # Figyelem: A current_lap 0-ról indul (ready), 1-re vált startnál.
+        current_lap_calc = max(1, run.current_lap)
+        real_total_dist = ((current_lap_calc - 1) * lap_len_m) + matched_distance
+
+        # -------------------------------------------------
+        # 2. ÁLLAPOTGÉP (State Machine)
+        # -------------------------------------------------
+
+        # A) RAJT (Ready -> Running)
+        if run.status == 'ready':
+            # Ha a felhasználó a pálya elején van (pl. < 50m) VAGY ez az első jel
+            run.status = 'running'
+            run.start_time = now
+            run.current_lap = 1
+            run.current_lap_start = now
+            run.current_distance = matched_distance
+            run.save()
+            return Response({"status": "started", "msg": "Rajt érzékelve!"})
+
+        # B) FUTÁS (Running -> Telemetria)
+        elif run.status == 'running':
+            # Fizika számítása
+            time_diff = (now - run.last_update).total_seconds()
+            dist_diff = real_total_dist - run.current_distance
+
+            # Csak akkor számolunk, ha előre haladt és telt el idő
+            if time_diff > 0 and dist_diff > 0:
+                speed, pace = calculate_pace_and_speed(dist_diff, time_diff)
+                run.current_speed = speed
+                run.current_pace = pace
+
+            # Adatok frissítése
+            run.current_distance = real_total_dist
+
+            # Progress %
+            if total_race_len_m > 0:
+                run.progress_percent = min(100.0, (real_total_dist / total_race_len_m) * 100)
+
+            # C) CÉLBAÉRÉS (Finish Check)
+            # Ha elértük a teljes táv 95%-át (GPS pontatlanság miatt hagyunk ráhagyást)
+            # ÉS az utolsó körben vagyunk.
+            if real_total_dist >= (total_race_len_m * 0.98):
+                run.status = 'finished'
+                run.current_distance = total_race_len_m # Kerekítjük a végére
+                run.progress_percent = 100.0
+                run.save()
+                return Response({"status": "finished", "msg": "Gratulálok, célba értél!"})
+
+            run.save()
+            return Response({"status": "running", "dist": real_total_dist, "pace": run.current_pace})
+
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+    return Response({"status": "ok"})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
