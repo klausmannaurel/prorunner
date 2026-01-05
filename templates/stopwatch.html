@@ -10,56 +10,92 @@
 <div class="stopwatch-container">
 
     <div class="stopwatch-header">
-        <h2><i class="fas fa-running"></i> Live Tracker</h2>
-        <div class="track-selector-wrapper" style="position: relative;">
-            <i class="fas fa-chevron-down"
-                style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--neon-blue); pointer-events: none; z-index: 10;">
-            </i>
-            <select id="sw-track-select" class="neon-select">
-                <option value="" disabled selected>Válassz pályát a méréshez...</option>
-            </select>
-        </div>
+        <h2><i class="fas fa-satellite-dish"></i> Telemetria</h2>
+        <p style="color:var(--text-muted); font-size:0.9rem;">GPS alapú élő követés</p>
     </div>
 
-    <div class="timer-display-card">
-        <div class="main-time" id="display-main">00:00:00</div>
-        <div class="lap-time-small" id="display-lap">Jelenlegi kör: <span>00:00:00</span></div>
+    <div id="setup-panel" class="">
+        <div class="timer-display-card" style="text-align: left;">
+            <h3 style="color:white; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+                <i class="fas fa-sliders-h"></i> Futás Beállítása
+            </h3>
 
-        <div class="status-badge" id="timer-status">Várakozás</div>
-    </div>
-
-    <div class="controls-grid">
-        <button id="btn-start" class="btn-neon start"><i class="fas fa-play"></i> Start</button>
-        <button id="btn-lap" class="btn-neon lap" disabled><i class="fas fa-flag-checkered"></i> Kör</button>
-        <button id="btn-stop" class="btn-neon stop hidden"><i class="fas fa-pause"></i> Stop</button>
-        <button id="btn-reset" class="btn-neon reset" disabled><i class="fas fa-undo"></i> Reset</button>
-    </div>
-
-    <div id="live-controls" class="hidden" style="margin-bottom: 30px; animation: fadeIn 0.5s;">
-        <div style="text-align:center; margin-bottom:10px; color:var(--text-muted); font-size:0.9rem;">
-            <i class="fas fa-satellite-dish" style="color:var(--neon-pink);"></i> LIVE TRACKER: Hol tartasz?
-        </div>
-        <div id="distance-buttons-container" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
-        </div>
-    </div>
-
-    <div class="laps-wrapper hidden" id="laps-wrapper">
-        <div class="laps-header">
-            <span>Kör</span>
-            <span>Idő</span>
-            <span>Összesen</span>
-        </div>
-        <div id="laps-list" class="laps-list">
+            <div class="form-group">
+                <label>Válassz Pályát</label>
+                <div class="track-selector-wrapper" style="position: relative;">
+                    <i class="fas fa-chevron-down" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--neon-blue); pointer-events: none; z-index: 10;"></i>
+                    <select id="sw-track-select" class="neon-select">
+                        <option value="" disabled selected>Betöltés...</option>
+                    </select>
+                </div>
             </div>
+
+            <div class="form-group">
+                <label>Cél (Körök száma)</label>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <button class="btn-inc" onclick="changeLaps(-1)"><i class="fas fa-minus"></i></button>
+                    <input type="number" id="target-laps" value="1" min="1" readonly class="neon-input-number">
+                    <button class="btn-inc" onclick="changeLaps(1)"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+
+            <button id="btn-set-ready" class="btn-neon start" style="width:100%; margin-top:20px;" onclick="setReady()">
+                <i class="fas fa-check-circle"></i> RAJTRA KÉSZ
+            </button>
+            <p style="text-align:center; color:#64748b; font-size:0.8rem; margin-top:10px;">
+                A gomb megnyomása után az óra (Apple Watch) indítja a mérést.
+            </p>
+        </div>
     </div>
 
-    <div class="save-section hidden" id="save-section">
-        <button onclick="saveSession()" class="btn-save-session">
-            Eredmény Mentése <i class="fas fa-cloud-upload-alt"></i>
-        </button>
+    <div id="monitor-panel" class="hidden">
+        
+        <div class="timer-display-card">
+            <div class="status-badge" id="monitor-status">VÁRAKOZÁS...</div>
+            <div class="main-time" id="monitor-time">00:00:00</div>
+            <div class="lap-time-small" id="monitor-track-name">Pálya betöltése...</div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="monitor-progress" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <div class="telemetry-grid">
+            <div class="telemetry-card">
+                <div class="t-icon"><i class="fas fa-tachometer-alt"></i></div>
+                <div class="t-value" id="val-speed">0.0</div>
+                <div class="t-label">km/h</div>
+            </div>
+            
+            <div class="telemetry-card">
+                <div class="t-icon"><i class="fas fa-stopwatch-20"></i></div>
+                <div class="t-value" id="val-pace">-:--</div>
+                <div class="t-label">p/km</div>
+            </div>
+
+            <div class="telemetry-card">
+                <div class="t-icon"><i class="fas fa-route"></i></div>
+                <div class="t-value" id="val-dist">0</div>
+                <div class="t-label">méter</div>
+            </div>
+
+            <div class="telemetry-card">
+                <div class="t-icon"><i class="fas fa-sync-alt"></i></div>
+                <div class="t-value"><span id="val-lap">1</span> / <span id="val-total-laps">1</span></div>
+                <div class="t-label">Kör</div>
+            </div>
+        </div>
+
+        <div style="text-align:center; margin-top:30px;">
+            <button onclick="forceStopRun()" style="background:none; border:none; color:#ef4444; text-decoration:underline; cursor:pointer; font-size:0.8rem;">
+                <i class="fas fa-trash"></i> Hibás futás törlése
+            </button>
+        </div>
     </div>
 
 </div>
+
+<div id="save-section" class="hidden"></div>
 {% endblock %}
 
 {% block extra_js %}
