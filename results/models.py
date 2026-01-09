@@ -282,6 +282,9 @@ class Result(models.Model):
     time = models.CharField(max_length=10)
     recorded_at = models.DateTimeField(auto_now_add=True)
     date = models.DateField(default=timezone.now)
+    # --- ÚJ MEZŐK A BMI SZÁMÍTÁSHOZ ---
+    runner_weight = models.FloatField(null=True, blank=True, verbose_name="Futó súlya (kg)")
+    runner_height = models.IntegerField(null=True, blank=True, verbose_name="Futó magassága (cm)")
 
     class Meta:
         ordering = ['time']
