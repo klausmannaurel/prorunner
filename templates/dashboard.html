@@ -117,6 +117,87 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="analysis-modal">
+    <div class="modal-card analysis-card">
+
+        <div class="hud-corner top-left"></div>
+        <div class="hud-corner top-right"></div>
+        <div class="hud-corner bottom-left"></div>
+        <div class="hud-corner bottom-right"></div>
+
+        <div class="modal-header" style="border-bottom: 1px solid rgba(0, 243, 255, 0.2); padding-bottom: 15px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="runner-avatar-lg" id="anal-avatar" style="background: var(--neon-pink);">U</div>
+                <div>
+                    <h3 id="anal-name" style="margin: 0; color: white; text-transform: uppercase; letter-spacing: 1px;">Futó Neve</h3>
+                    <small id="anal-date" style="color: var(--neon-blue); font-family: monospace;">2026-01-08</small>
+                </div>
+            </div>
+            <button onclick="closeModal('analysis-modal')" class="close-btn-sci"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="analysis-grid">
+
+            <div class="anal-main-stat">
+                <div class="stat-circle-container">
+                    <svg viewBox="0 0 36 36" class="circular-chart">
+                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="circle" stroke-dasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="circle-text">
+                        <span class="value">642</span>
+                        <span class="label">KCAL</span>
+                    </div>
+                </div>
+                <div class="xp-gain">
+                    <i class="fas fa-bolt" style="color: #ffd700;"></i> +150 XP GAINED
+                </div>
+            </div>
+
+            <div class="anal-details-list">
+
+                <div class="detail-row">
+                    <div class="icon-box"><i class="fas fa-heartbeat"></i></div>
+                    <div class="detail-info">
+                        <span class="lbl">Átlag Pulzus</span>
+                        <span class="val">145 <small>BPM</small></span>
+                    </div>
+                    <div class="bar-container"><div class="bar-fill" style="width: 70%; background: #ff4757;"></div></div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="icon-box"><i class="fas fa-fire-alt"></i></div>
+                    <div class="detail-info">
+                        <span class="lbl">Intenzitás</span>
+                        <span class="val">Magas</span>
+                    </div>
+                    <div class="bar-container"><div class="bar-fill" style="width: 85%; background: var(--neon-orange);"></div></div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="icon-box"><i class="fas fa-shoe-prints"></i></div>
+                    <div class="detail-info">
+                        <span class="lbl">Lépésszám (becsült)</span>
+                        <span class="val">4,250</span>
+                    </div>
+                    <div class="bar-container"><div class="bar-fill" style="width: 60%; background: var(--neon-blue);"></div></div>
+                </div>
+
+                <div class="rpg-stat-box">
+                    <div class="rpg-title">PLAYER STATS UPDATE</div>
+                    <div class="rpg-grid">
+                        <div class="rpg-item">STAMINA <span style="color:var(--neon-green)">+2</span></div>
+                        <div class="rpg-item">SPEED <span style="color:var(--neon-blue)">+1</span></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="scan-line-anim"></div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
