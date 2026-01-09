@@ -229,9 +229,49 @@ function resetAdminForm() {
   document.getElementById("input-name").value = "";
   document.getElementById("laps-container").innerHTML = "";
 
-  // Dátumot is visszaállítjuk maira resetnél
   const dateInput = document.getElementById("input-date");
   if (dateInput) dateInput.value = new Date().toISOString().split("T")[0];
+
+  // --- OKOS ÉS BIZTONSÁGOS BIOLÓGIAI ADAT KEZELÉS ---
+  const bioCheckbox = document.getElementById('check-use-bio');
+  const bioLabel = bioCheckbox ? bioCheckbox.parentElement : null; // A felirat
+
+  if (bioCheckbox) {
+      // 1. Ellenőrzés: Megvan minden adat?
+      const hasAllProfileData = currentUser && currentUser.weight && currentUser.height;
+
+      if (hasAllProfileData) {
+          // Ha minden oké: Engedélyezzük és bepipáljuk
+          bioCheckbox.disabled = false;
+          bioCheckbox.checked = true;
+          if(bioLabel) bioLabel.style.opacity = "1";
+          if(bioLabel) bioLabel.title = "";
+      } else {
+          // Ha HIÁNYZIK adat: Letiltjuk és kivesszük a pipát
+          bioCheckbox.checked = false;
+          bioCheckbox.disabled = true; // ITT A VÉDELEM! Nem tud ráklikkelni.
+
+          // Vizuális jelzés, hogy miért nem működik
+          if(bioLabel) {
+              bioLabel.style.opacity = "0.5"; // Halványítjuk
+              bioLabel.title = "A funkció használatához töltsd ki a profilodban a súlyt és magasságot!";
+          }
+
+          // ...De azért segítünk és betöltjük a részadatokat a kézi mezőkbe
+          if (currentUser) {
+              const wInput = document.getElementById('input-weight');
+              const hInput = document.getElementById('input-height');
+              if (wInput) wInput.value = currentUser.weight || '';
+              if (hInput) hInput.value = currentUser.height || '';
+          }
+      }
+
+      // Frissítjük a láthatóságot (mivel a pipa kikerült, a mezők meg fognak jelenni)
+      if (typeof window.toggleBioInputs === 'function') {
+          window.toggleBioInputs();
+      }
+  }
+  // ---------------------------------------------------
 
   addLapInput();
 }
@@ -255,6 +295,24 @@ function updateLapCount() {
   const count = document.getElementsByClassName("lap-input-field").length;
   const lapInput = document.getElementById("input-laps");
   if (lapInput) lapInput.value = count > 0 ? count : 1;
+}
+
+window.toggleBioInputs = function() {
+    const isChecked = document.getElementById('check-use-bio').checked;
+    const wrapper = document.getElementById('bio-inputs-wrapper');
+
+    if (isChecked) {
+        wrapper.style.display = 'none';
+        // Ha visszapipáljuk, töltsük vissza a profil adatokat
+        if(currentUser) {
+            const wInput = document.getElementById('input-weight');
+            const hInput = document.getElementById('input-height');
+            if(wInput) wInput.value = currentUser.weight || '';
+            if(hInput) hInput.value = currentUser.height || '';
+        }
+    } else {
+        wrapper.style.display = 'grid'; // A CSS-ben gridet használtunk
+    }
 }
 
 function getCookie(name) {
@@ -394,15 +452,15 @@ function checkUrlForTrack() {
   }
 }
 
-function openAnalysisModal(runnerName, date, time) {
+function openAnalysisModal(runnerName, date, time, savedWeight, savedHeight) {
   const modal = document.getElementById("analysis-modal");
   if (!modal) return;
 
-  // Adatok beírása (egyelőre csak a nevet és dátumot cseréljük, a többi kamu adat)
+  // 1. Alap adatok beírása (Név, Dátum)
   document.getElementById("anal-name").textContent = runnerName;
   document.getElementById("anal-date").textContent = date;
 
-  // Avatar monogram
+  // 2. Avatar monogram generálása
   const mono = runnerName
     .split(" ")
     .map((n) => n[0])
@@ -411,7 +469,61 @@ function openAnalysisModal(runnerName, date, time) {
     .toUpperCase();
   document.getElementById("anal-avatar").textContent = mono;
 
-  // Megnyitás
+  // 3. BMI LOGIKA
+  // Megnézzük, van-e mentett adat a futáshoz.
+  let weight = savedWeight;
+  let height = savedHeight;
+
+  // Ha nincs mentett adat, de be vagyunk lépve, használjuk a profil adatait ("B terv")
+  if (!weight && !height && typeof currentUser !== 'undefined' && currentUser) {
+      weight = currentUser.weight;
+      height = currentUser.height;
+  }
+
+  // Számítás és Megjelenítés változók
+  let bmiHtml = '<span class="val" style="color:#777;">N/A</span>';
+  let barWidth = '0%';
+  let barColor = '#333';
+
+  if (weight > 0 && height > 0) {
+      const h_meter = height / 100;
+      const bmi = (weight / (h_meter * h_meter)).toFixed(1);
+
+      // Színkódok meghatározása
+      if (bmi < 18.5) barColor = '#3498db';      // Kék (Sovány)
+      else if (bmi < 25) barColor = '#2ecc71';   // Zöld (Normál)
+      else if (bmi < 30) barColor = '#f1c40f';   // Sárga (Túlsúly)
+      else barColor = '#e74c3c';                 // Piros (Elhízott)
+
+      bmiHtml = `<span class="val">${bmi} <small>BMI</small></span>`;
+      barWidth = '100%';
+  }
+
+  // 4. DOM Manipuláció (Lista frissítése)
+  const listContainer = document.querySelector('.anal-details-list');
+
+  // Fontos: Töröljük a régi BMI sort, ha már létezik (hogy ne duplázódjon)
+  const existingRow = document.getElementById('bmi-row-unique');
+  if (existingRow) existingRow.remove();
+
+  // Az új sor HTML kódja
+  const bmiRow = `
+      <div class="detail-row" id="bmi-row-unique">
+          <div class="icon-box"><i class="fas fa-weight"></i></div>
+          <div class="detail-info">
+              <span class="lbl">Testtömeg Index</span>
+              ${bmiHtml}
+          </div>
+          <div class="bar-container">
+              <div class="bar-fill" style="width: ${barWidth}; background: ${barColor}; box-shadow: 0 0 10px ${barColor};"></div>
+          </div>
+      </div>
+  `;
+
+  // Beszúrjuk a lista legelejére ('afterbegin')
+  listContainer.insertAdjacentHTML('afterbegin', bmiRow);
+
+  // 5. Megnyitás
   modal.classList.add("active");
 }
 
@@ -559,9 +671,7 @@ async function loadResults(trackId) {
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
-                <button class="details-btn" onclick="openAnalysisModal('${
-                  res.runner_name
-                }', '${res.date}', '${res.time}')"
+                <button class="details-btn" onclick="openAnalysisModal('${res.runner_name}', '${res.date}', '${res.time}', ${res.runner_weight}, ${res.runner_height})"
                         style="background: rgba(0, 243, 255, 0.1); color: var(--neon-blue); border: 1px solid rgba(0, 243, 255, 0.3); border-radius: 8px;">
                     <i class="fas fa-microchip"></i> Elemzés
                 </button>
@@ -753,8 +863,29 @@ async function handleResultSubmit() {
     .map((i) => i.value.trim())
     .filter((v) => v !== "");
 
-  // --- ÚJ: Dátum input lekérése ---
+  // Dátum input lekérése
   const tDateInput = document.getElementById("input-date");
+
+  // --- ÚJ RÉSZ: Biológiai adatok logikája ---
+  const useBioCheckbox = document.getElementById("check-use-bio");
+  const useBio = useBioCheckbox ? useBioCheckbox.checked : false;
+
+  let weightToSend = null;
+  let heightToSend = null;
+
+  if (useBio && currentUser) {
+      // Ha be van pipálva, a profilból vesszük az adatot (ha van)
+      weightToSend = currentUser.weight;
+      heightToSend = currentUser.height;
+  } else {
+      // Ha nincs pipálva, a kézi input mezőkből olvassuk ki
+      const wInput = document.getElementById("input-weight");
+      const hInput = document.getElementById("input-height");
+
+      if (wInput && wInput.value) weightToSend = wInput.value;
+      if (hInput && hInput.value) heightToSend = hInput.value;
+  }
+  // ------------------------------------------
 
   if (!tId || laps.length === 0) {
     alert("Válassz pályát és adj meg köridőket!");
@@ -764,8 +895,7 @@ async function handleResultSubmit() {
   let totalSec = 0,
     valid = true;
   laps.forEach((t) => {
-    // JAVÍTÁS: A regex most már engedi az opcionális tizedes részt (pl. .51)
-    // Elfogadott: 12:34 vagy 12:34.56 vagy 1:23:45.67
+    // Regex: engedi az opcionális tizedes részt (pl. .51)
     if (
       !t.match(/^\d{1,2}:\d{2}(\.\d+)?$/) &&
       !t.match(/^\d{1,2}:\d{2}:\d{2}(\.\d+)?$/)
@@ -785,11 +915,15 @@ async function handleResultSubmit() {
       laps_count: laps.length,
       lap_times: laps.join(", "),
       time: secondsToTimeStr(totalSec),
-      // --- ÚJ: Dátum elküldése ---
       date: tDateInput
         ? tDateInput.value
         : new Date().toISOString().split("T")[0],
+
+      // --- ÚJ: Súly és Magasság küldése ---
+      weight: weightToSend,
+      height: heightToSend
     };
+
     if (tNameInput.value.trim() !== "") payload.runner_name = tNameInput.value;
 
     let url = "/api/results/save/";
