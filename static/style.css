@@ -86,7 +86,6 @@
 
 body {
     font-family: 'Exo 2', sans-serif;
-    /* A sci-fi font */
     margin: 0;
     background-color: var(--bg-dark);
     color: var(--text-main);
@@ -94,12 +93,6 @@ body {
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
-
-    /* Háttér rács minta */
-    background-image:
-        linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
-    background-size: 40px 40px;
 }
 
 /* --- SCROLLBAR --- */
@@ -928,4 +921,467 @@ select#track-select option {
     to {
         stroke-dashoffset: -1000;
     }
+}
+
+/* --- SCI-FI ANALITIKA MODAL --- */
+
+.analysis-card {
+    max-width: 800px !important; /* Szélesebb ablak */
+    width: 95% !important;
+    background: rgba(10, 15, 30, 0.95) !important;
+    border: 1px solid var(--neon-blue);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 50px rgba(0, 243, 255, 0.15);
+}
+
+/* Rács elrendezés: Balra a kördiagram, jobbra az adatok */
+.analysis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+@media (max-width: 700px) {
+    .analysis-grid {
+        grid-template-columns: 1fr; /* Mobilon egymás alá */
+    }
+}
+
+/* --- KÖRDIAGRAM (KCAL) --- */
+.stat-circle-container {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    margin: 0 auto;
+}
+
+.circular-chart {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.circle-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.05);
+    stroke-width: 2.5;
+}
+
+.circle {
+    fill: none;
+    stroke: var(--neon-orange); /* Kalória szín */
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    animation: progress 1.5s ease-out forwards;
+    box-shadow: 0 0 20px var(--neon-orange);
+    filter: drop-shadow(0 0 5px var(--neon-orange));
+}
+
+@keyframes progress {
+    0% { stroke-dasharray: 0 100; }
+}
+
+.circle-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.circle-text .value {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: white;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.circle-text .label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+}
+
+.xp-gain {
+    margin-top: 20px;
+    text-align: center;
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: #ffd700;
+    padding: 10px;
+    border-radius: 50px;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    animation: pulseXP 2s infinite;
+}
+
+@keyframes pulseXP {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* --- LISTA ELEMEK --- */
+.detail-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 10px;
+    border-radius: 12px;
+}
+
+.icon-box {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--neon-blue);
+    font-size: 1.2rem;
+}
+
+.detail-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-info .lbl { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+.detail-info .val { font-size: 1.2rem; font-weight: bold; color: white; }
+
+.bar-container {
+    width: 80px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    box-shadow: 0 0 10px currentColor;
+}
+
+/* --- RPG BOX --- */
+.rpg-stat-box {
+    margin-top: 20px;
+    border: 1px dashed var(--glass-border);
+    padding: 15px;
+    border-radius: 12px;
+}
+
+.rpg-title {
+    font-size: 0.7rem;
+    color: var(--neon-blue);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
+.rpg-grid {
+    display: flex;
+    gap: 20px;
+}
+
+.rpg-item {
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+}
+
+/* --- DÍSZÍTŐ SARKOK (HUD) --- */
+.hud-corner {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--neon-blue);
+    pointer-events: none;
+}
+.hud-corner.top-left { top: 0; left: 0; border-right: none; border-bottom: none; }
+.hud-corner.top-right { top: 0; right: 0; border-left: none; border-bottom: none; }
+.hud-corner.bottom-left { bottom: 0; left: 0; border-right: none; border-top: none; }
+.hud-corner.bottom-right { bottom: 0; right: 0; border-left: none; border-top: none; }
+
+/* SCAN LINE ANIMÁCIÓ (Hologram hatás) */
+.scan-line-anim {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 5px;
+    background: rgba(0, 243, 255, 0.3);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+    animation: scanDown 4s linear infinite;
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+@keyframes scanDown {
+    0% { top: -10%; opacity: 0; }
+    10% { opacity: 0.5; }
+    90% { opacity: 0.5; }
+    100% { top: 110%; opacity: 0; }
+}
+
+.close-btn-sci {
+    background: none; border: 1px solid var(--text-muted); color: var(--text-muted);
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer; transition: 0.3s;
+}
+.close-btn-sci:hover {
+    border-color: var(--neon-pink); color: var(--neon-pink); box-shadow: 0 0 10px var(--neon-pink);
+}
+
+/* =========================================
+   PRO RUNNER - TRON THEME FINAL PACK
+   ========================================= */
+
+/* --- 1. TRON HÁTTÉR (Sima, Vibrálásmentes) --- */
+.tron-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 0;
+    background: #050b14;
+    perspective: 1000px;
+}
+
+.tron-grid-floor {
+    position: absolute;
+    top: -30%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+
+    /* 1. SEBESSÉG OPTIMALIZÁLÁS:
+       A "filter: blur()" sort TÖRÖLTÜK, mert az okozta a szaggatást!
+       Helyette a vonalat vesszük lágyabbra (transparent 1.5px) */
+    background-image:
+        linear-gradient(90deg, rgba(0, 243, 255, 0.25) 0px, transparent 1.5px),
+        linear-gradient(0deg, rgba(0, 243, 255, 0.25) 0px, transparent 1.5px);
+
+    background-size: 100px 100px;
+    transform: rotateX(75deg);
+
+    animation: gridMove 3s linear infinite;
+
+    /* 2. VILLÓDZÁS ELREJTÉSE:
+       A maszkolást agresszívebbre vettem.
+       A távoli rész (felső 50-60%) teljesen láthatatlan lesz,
+       így ott, ahol sűrűsödnének a vonalak (és vibrálnának), már nem látszanak. */
+    mask-image: linear-gradient(to bottom, transparent 20%, rgba(0,0,0,1) 60%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 20%, rgba(0,0,0,1) 60%);
+
+    /* Hardveres gyorsítás marad */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform-style: preserve-3d;
+    will-change: transform;
+}
+
+@keyframes gridMove {
+    0% { transform: rotateX(75deg) translateY(0); }
+    100% { transform: rotateX(75deg) translateY(100px); }
+}
+
+/* --- 2. ELRENDEZÉS (Videó felül, Cím alul) --- */
+
+/* VIDEÓ KERET */
+.portal-frame {
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+    height: 450px;
+
+    /* Sorrend: Ez van felül */
+    order: 1;
+
+    /* Feljebb húzzuk a horizont felé */
+    margin-top: -80px;
+
+    padding: 10px;
+    border-radius: 44px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(0, 243, 255, 0.3);
+    box-shadow: 0 0 30px rgba(0, 243, 255, 0.1), inset 0 0 20px rgba(0, 243, 255, 0.05);
+
+    will-change: transform;
+    animation: floatVertical 6s ease-in-out infinite;
+    z-index: 10;
+}
+
+/* ÜVEGTÁBLA CÍM */
+.glass-content {
+    position: relative;
+    top: auto; left: auto; transform: none;
+
+    /* Sorrend: Ez van alul */
+    order: 2;
+
+    /* Lejjebb toljuk, épphogy érintse a videót */
+    margin-top: -30px;
+    margin-bottom: 60px;
+
+    width: 100%;
+    max-width: 700px;
+
+    padding: 35px 30px;
+    text-align: center;
+    background: rgba(13, 19, 33, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    border-radius: 24px;
+    z-index: 20;
+}
+
+/* --- TRON GLITCH TEXT (VÍZSZINTES TORZÍTÁSSAL - SKEW) --- */
+
+/* 1. A FŐ SZÖVEG (Most már ez is mozog!) */
+.hero-title .neon-text {
+    position: relative;
+    display: inline-block;
+    color: #00f3ff;
+    text-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+
+    /* Két animáció fut egyszerre:
+       1. neonPulseSmooth: A finom villogás (marad 4s)
+       2. glitch-main-shake: A vízszintes rángatózás (5s ciklus, mint a többinek) */
+    animation:
+        neonPulseSmooth 4s infinite alternate ease-in-out,
+        glitch-main-shake 5s infinite linear alternate-reverse;
+}
+
+/* 2. SZELLEMKÉPEK (Színes rétegek) - Ezek maradnak, csak az időzítés 5s */
+.hero-title .neon-text::before,
+.hero-title .neon-text::after {
+    content: 'JÖVŐBE';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #050b14;
+    opacity: 1;
+}
+
+/* Magenta réteg */
+.hero-title .neon-text::before {
+    color: #ff00de;
+    z-index: -1;
+    animation: glitch-anim-1 5s infinite linear alternate-reverse;
+}
+
+/* Cyan réteg */
+.hero-title .neon-text::after {
+    color: #00f3ff;
+    z-index: -2;
+    animation: glitch-anim-2 5s infinite linear alternate-reverse;
+}
+
+
+/* --- ANIMÁCIÓK --- */
+
+/* ÚJ: A fő szöveg vízszintes torzulása (Skew + Translate) */
+/* Csak a ciklus végén (70-100%) rándul meg */
+@keyframes glitch-main-shake {
+    0%, 70% {
+        transform: translate(0, 0) skewX(0deg);
+    }
+    72% {
+        transform: translate(-2px, 0) skewX(-10deg); /* Balra dől */
+    }
+    75% {
+        transform: translate(2px, 0) skewX(10deg);  /* Jobbra dől */
+    }
+    78% {
+        transform: translate(-1px, 0) skewX(-5deg);
+    }
+    85% {
+        transform: translate(0, 0) skewX(0deg);     /* Megnyugszik kicsit */
+    }
+    92% {
+        transform: translate(3px, 0) skewX(5deg);   /* Újra megrándul */
+    }
+    100% {
+        transform: translate(0, 0) skewX(0deg);
+    }
+}
+
+/* A korábbi szellemkép animációk (kicsit nagyobb kitéréssel) */
+@keyframes glitch-anim-1 {
+    0%, 70% {
+        clip-path: inset(0 0 0 0);
+        transform: translate(0);
+    }
+    72% {
+        clip-path: inset(40% 0 60% 0);
+        transform: translate(-8px, 0); /* Növeltem: 5px -> 8px */
+    }
+    76% {
+        clip-path: inset(10% 0 20% 0);
+        transform: translate(8px, 0);
+    }
+    82% {
+        clip-path: inset(80% 0 5% 0);
+        transform: translate(-6px, 0);
+    }
+    88% {
+        clip-path: inset(20% 0 50% 0);
+        transform: translate(4px, 0);
+    }
+    94% {
+        clip-path: inset(10% 0 60% 0);
+        transform: translate(-4px, 0);
+    }
+    100% {
+        clip-path: inset(0 0 0 0);
+        transform: translate(0);
+    }
+}
+
+@keyframes glitch-anim-2 {
+    0%, 70% {
+        clip-path: inset(0 0 0 0);
+        transform: translate(0);
+    }
+    73% {
+        clip-path: inset(10% 0 50% 0);
+        transform: translate(6px, 0); /* Növeltem */
+    }
+    78% {
+        clip-path: inset(80% 0 10% 0);
+        transform: translate(-6px, 0);
+    }
+    84% {
+        clip-path: inset(30% 0 40% 0);
+        transform: translate(5px, 0);
+    }
+    90% {
+        clip-path: inset(15% 0 60% 0);
+        transform: translate(-5px, 0);
+    }
+    96% {
+        clip-path: inset(60% 0 20% 0);
+        transform: translate(3px, 0);
+    }
+    100% {
+        clip-path: inset(0 0 0 0);
+        transform: translate(0);
+    }
+}
+
+/* Finom pulzálás (Marad a régi) */
+@keyframes neonPulseSmooth {
+    0% { opacity: 1; text-shadow: 0 0 15px rgba(0, 243, 255, 0.4); }
+    100% { opacity: 0.85; text-shadow: 0 0 25px rgba(0, 243, 255, 0.7); }
 }
