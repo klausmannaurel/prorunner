@@ -3,6 +3,10 @@
 {% block content %}
 <div class="hero-section">
 
+    <div class="tron-background">
+        <div class="tron-grid-floor"></div>
+    </div>
+
     <div class="cyber-lines-container">
         <div class="cyber-line line-1"></div>
         <div class="cyber-line line-2"></div>
@@ -93,64 +97,26 @@
 <style>
     /* --- ANIMÁCIÓK (GPU optimalizált) --- */
     @keyframes floatVertical {
-
-        0%,
-        100% {
-            transform: translate3d(0, 0, 0);
-        }
-
-        50% {
-            transform: translate3d(0, -15px, 0);
-        }
+        0%, 100% { transform: translate3d(0, 0, 0); }
+        50% { transform: translate3d(0, -15px, 0); }
     }
 
     @keyframes neonPulseOpacity {
-
-        0%,
-        100% {
-            opacity: 1;
-            filter: brightness(1);
-        }
-
-        50% {
-            opacity: 0.8;
-            filter: brightness(1.2);
-        }
+        0%, 100% { opacity: 1; filter: brightness(1); }
+        50% { opacity: 0.8; filter: brightness(1.2); }
     }
 
     @keyframes scanlineMove {
-        0% {
-            transform: translateY(-100%);
-            opacity: 0;
-        }
-
-        15% {
-            opacity: 1;
-        }
-
-        85% {
-            opacity: 1;
-        }
-
-        100% {
-            transform: translateY(800px);
-            opacity: 0;
-        }
+        0% { transform: translateY(-100%); opacity: 0; }
+        15% { opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translateY(800px); opacity: 0; }
     }
 
     /* Oldalsó csíkok pulzálása */
     @keyframes linePulse {
-
-        0%,
-        100% {
-            height: 100px;
-            opacity: 0.3;
-        }
-
-        50% {
-            height: 180px;
-            opacity: 0.8;
-        }
+        0%, 100% { height: 100px; opacity: 0.3; }
+        50% { height: 180px; opacity: 0.8; }
     }
 
     /* --- FŐ LAYOUT & HÁTTÉR RÁCS --- */
@@ -170,10 +136,7 @@
     .hero-section::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        top: 0; left: 0; width: 100%; height: 100%;
         display: none;
     }
 
@@ -189,12 +152,10 @@
         height: auto;
 
         display: flex;
-        flex-direction: column;
-        /* Egymás alá */
+        flex-direction: column; /* Egymás alá */
         align-items: center;
         justify-content: center;
-        gap: 30px;
-        /* Távolság a cím és a videó között */
+        gap: 30px; /* Távolság a cím és a videó között */
 
         z-index: 10;
         perspective: 1200px;
@@ -215,13 +176,8 @@
         z-index: 5;
     }
 
-    .left-decor {
-        left: -30px;
-    }
-
-    .right-decor {
-        right: -30px;
-    }
+    .left-decor { left: -30px; }
+    .right-decor { right: -30px; }
 
     .decor-stripe {
         width: 2px;
@@ -238,106 +194,83 @@
     }
 
     /* --- GLASS CONTENT (ÜVEGTÁBLA - CÍM) --- */
-    /* MÓDOSÍTVA: Feljebb pozicionálva */
     .glass-content {
         position: relative;
         transform: none;
         top: auto;
         left: auto;
 
-        /* Sorrend: Legyen ez legfelül */
-        order: 1;
+        /* SORREND CSERE: Most ez lesz alul (2-es) */
+        order: 2;
 
-        /* POZÍCIÓ MÓDOSÍTÁS: Feljebb húzzuk negatív margóval */
-        margin-top: -70px;
-        margin-bottom: 20px;
-        /* Kis extra térköz alul */
+        /* ELTOLÁS BEÁLLÍTÁSA:
+           Mivel most a videó alatt van, a negatív margin-top
+           felfelé húzza, így "rálóg" a videó aljára. */
+        margin-top: 20px;
+        margin-bottom: 40px;
 
         width: 100%;
-        max-width: 600px;
-        /* Szélesebb */
+        max-width: 700px; /* Kicsit szélesebb, hogy jobban elférjen */
 
         padding: 35px 30px;
         text-align: center;
 
-        background: rgba(13, 19, 33, 0.6);
+        background: rgba(13, 19, 33, 0.7); /* Kicsit sötétebb üveg a jobb olvashatóságért */
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
 
         border: 1px solid rgba(255, 255, 255, 0.08);
-        border-top: 1px solid rgba(255, 255, 255, 0.15);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+        border-top: 1px solid rgba(255, 255, 255, 0.2); /* Fénycsík felül */
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
         border-radius: 24px;
+
+        /* Fontos: magasabb Z-index, hogy a videó FELETT legyen az átfedésnél */
         z-index: 20;
     }
 
     /* --- PORTAL FRAME (VIDEÓ KERET) --- */
-    /* Fix magasság és alsó pozíció */
     .portal-frame {
         position: relative;
         width: 100%;
         max-width: 1200px;
+        height: 450px; /* Picit kisebb magasság, hogy kompakt legyen */
 
-        height: 500px;
-        /* Fix magasság a szép arányokért */
+        /* SORREND CSERE: Most ez lesz felül (1-es) */
+        order: 1;
+        margin-top: -80px;
 
-        /* Sorrend: Ez legyen alul */
-        order: 2;
-
-        padding: 14px;
-        border-radius: 64px;
+        padding: 10px; /* Vékonyabb keret */
+        border-radius: 44px; /* Kicsit modernebb ív */
 
         background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(0, 243, 255, 0.2);
+        border: 1px solid rgba(0, 243, 255, 0.3); /* Erősebb neon keret */
         box-shadow:
-            0 20px 50px rgba(0, 0, 0, 0.6),
-            inset 0 0 30px rgba(0, 243, 255, 0.05);
+            0 0 30px rgba(0, 243, 255, 0.1),
+            inset 0 0 20px rgba(0, 243, 255, 0.05);
+
         will-change: transform;
         animation: floatVertical 6s ease-in-out infinite;
+
+        z-index: 10; /* A szöveg mögött legyen az alja */
     }
 
     /* Dekoratív sarkok */
     .corner-accent {
         position: absolute;
-        width: 20px;
-        height: 20px;
+        width: 20px; height: 20px;
         border: 2px solid rgba(0, 243, 255, 0.5);
         z-index: 20;
         box-shadow: 0 0 8px rgba(0, 243, 255, 0.2);
     }
 
-    .tl {
-        top: -2px;
-        left: -2px;
-        border-width: 2px 0 0 2px;
-        border-radius: 80px 0 0 0;
-    }
-
-    .tr {
-        top: -2px;
-        right: -2px;
-        border-width: 2px 2px 0 0;
-        border-radius: 0 80px 0 0;
-    }
-
-    .bl {
-        bottom: -2px;
-        left: -2px;
-        border-width: 0 0 2px 2px;
-        border-radius: 0 0 0 80px;
-    }
-
-    .br {
-        bottom: -2px;
-        right: -2px;
-        border-width: 0 2px 2px 0;
-        border-radius: 0 0 80px 0;
-    }
+    .tl { top: -2px; left: -2px; border-width: 2px 0 0 2px; border-radius: 80px 0 0 0; }
+    .tr { top: -2px; right: -2px; border-width: 2px 2px 0 0; border-radius: 0 80px 0 0; }
+    .bl { bottom: -2px; left: -2px; border-width: 0 0 2px 2px; border-radius: 0 0 0 80px; }
+    .br { bottom: -2px; right: -2px; border-width: 0 2px 2px 0; border-radius: 0 0 80px 0; }
 
     /* --- VIDEO AREA --- */
     .video-mask {
-        width: 100%;
-        height: 100%;
+        width: 100%; height: 100%;
         border-radius: 50px;
         overflow: hidden;
         position: relative;
@@ -345,50 +278,41 @@
         transform: translateZ(0);
     }
 
-    .bg-video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        opacity: 0.8;
-    }
+   .bg-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.8;
+
+    /* ÚJ SOROK A SIMA LEJÁTSZÁSÉRT: */
+    transform: translateZ(0); /* GPU réteg kényszerítése */
+    will-change: transform;   /* Előre szólunk a böngészőnek */
+    backface-visibility: hidden;
+}
 
     .video-grid-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: radial-gradient(circle, transparent 40%, rgba(5, 11, 20, 0.8) 120%);
         z-index: 2;
     }
 
     .scan-line {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 2px;
+        position: absolute; top: 0; left: 0; width: 100%; height: 2px;
         background: rgba(0, 243, 255, 0.6);
         box-shadow: 0 0 10px rgba(0, 243, 255, 0.6);
         z-index: 5;
         animation: scanlineMove 6s linear infinite;
-        pointer-events: none;
-        opacity: 0;
+        pointer-events: none; opacity: 0;
     }
 
     .tech-badge {
-        position: absolute;
-        bottom: 25px;
-        right: 40px;
-        padding: 5px 12px;
-        border-radius: 20px;
+        position: absolute; bottom: 25px; right: 40px;
+        padding: 5px 12px; border-radius: 20px;
         background: rgba(0, 0, 0, 0.4);
         border: 1px solid rgba(255, 255, 255, 0.1);
         color: #39ff14;
-        font-family: monospace;
-        font-size: 0.75rem;
-        z-index: 6;
-        backdrop-filter: blur(4px);
+        font-family: monospace; font-size: 0.75rem;
+        z-index: 6; backdrop-filter: blur(4px);
     }
 
     /* --- SZÖVEG STÍLUSOK --- */
@@ -439,9 +363,7 @@
         font-size: 0.9rem;
         letter-spacing: 1px;
         transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        display: flex; align-items: center; gap: 10px;
         font-family: 'Exo 2', sans-serif;
     }
 
@@ -472,13 +394,8 @@
         box-shadow: 0 0 15px rgba(57, 255, 20, 0.1);
     }
 
-    .icon-slide {
-        transition: transform 0.3s;
-    }
-
-    .btn-hero.primary:hover .icon-slide {
-        transform: translateX(4px);
-    }
+    .icon-slide { transition: transform 0.3s; }
+    .btn-hero.primary:hover .icon-slide { transform: translateX(4px); }
 
     /* --- MOBIL NÉZET --- */
     @media (max-width: 900px) {
@@ -487,13 +404,10 @@
             /* Mobilon is marad a Column elrendezés */
         }
 
-        .side-decor {
-            display: none;
-        }
+        .side-decor { display: none; }
 
         .portal-frame {
-            height: 300px;
-            /* Kisebb videó */
+            height: 300px; /* Kisebb videó */
             width: 100%;
             animation: none;
 
@@ -502,9 +416,7 @@
             border-radius: 44px;
         }
 
-        .video-mask {
-            border-radius: 30px;
-        }
+        .video-mask { border-radius: 30px; }
 
         .glass-content {
             width: 100%;
@@ -521,9 +433,7 @@
             padding: 30px 20px;
         }
 
-        .hero-title {
-            font-size: 2rem;
-        }
+        .hero-title { font-size: 2rem; }
 
         .hero-buttons {
             flex-direction: column;
