@@ -452,7 +452,7 @@ function checkUrlForTrack() {
   }
 }
 
-function openAnalysisModal(runnerName, date, time, savedWeight, savedHeight) {
+function openAnalysisModal(runnerName, date, time, savedWeight, savedHeight, runnerId) {
   const modal = document.getElementById("analysis-modal");
   if (!modal) return;
 
@@ -475,9 +475,12 @@ function openAnalysisModal(runnerName, date, time, savedWeight, savedHeight) {
   let height = savedHeight;
 
   // Ha nincs mentett adat, de be vagyunk lépve, használjuk a profil adatait ("B terv")
+  // JAVÍTÁS: Csak akkor, ha a saját eredményünket nézzük!
   if (!weight && !height && typeof currentUser !== 'undefined' && currentUser) {
-      weight = currentUser.weight;
-      height = currentUser.height;
+      if (runnerId && currentUser.id === runnerId) {
+          weight = currentUser.weight;
+          height = currentUser.height;
+      }
   }
 
   // Számítás és Megjelenítés változók
