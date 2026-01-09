@@ -528,13 +528,26 @@ def result_save(request):
     else:
         data['runner_name'] = request.user.get_full_name() or request.user.username
 
+    # Kivesszük a bejövő súly/magasság adatokat
+    weight = data.pop('weight', None)
+    height = data.pop('height', None)
+
     serializer = ResultSerializer(data=data)
     if serializer.is_valid():
         try:
-            serializer.save(user=request.user)
+            # Mentés előtt hozzáadjuk a plusz adatokat
+            result = serializer.save(user=request.user)
+
+            if weight:
+                result.runner_weight = float(weight)
+            if height:
+                result.runner_height = int(height)
+
+            result.save() # Frissítjük a rekordot
+
             return Response({"message": "Sikeres mentés"}, status=status.HTTP_201_CREATED)
         except Exception as e:
-             return Response({"message": f"Adatbázis hiba: {str(e)}"}, status=400)
+             return Response({"message": f"Hiba: {str(e)}"}, status=400)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'PUT', 'DELETE'])
@@ -588,13 +601,23 @@ def api_logout(request):
 @api_view(['GET'])
 def current_user(request):
     if request.user.is_authenticated:
-        return Response({
+        data = {
             "is_authenticated": True,
             "username": request.user.username,
             "full_name": request.user.get_full_name() or request.user.username,
             "is_staff": request.user.is_staff,
             "id": request.user.id
-        })
+        }
+        # Profil adatok hozzáadása
+        try:
+            profile = request.user.profile
+            data['weight'] = profile.weight_kg
+            data['height'] = profile.height_cm
+        except:
+            data['weight'] = None
+            data['height'] = None
+
+        return Response(data)
     return Response({"is_authenticated": False})
 
 @api_view(['POST'])
