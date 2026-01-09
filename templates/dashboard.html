@@ -1,205 +1,418 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %} {% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+{% endblock %} {% block content %}
 
-{% block extra_css %}
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-{% endblock %}
-
-{% block content %}
-
-    <div class="dashboard-container">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="select-wrapper">
-                    <label for="track-select" class="track-selector-label">Aktív Pálya</label>
-                    <i class="fas fa-chevron-down select-icon"></i>
-                    <select id="track-select">
-                        <option value="" disabled selected>Betöltés...</option>
-                    </select>
-                </div>
-            </div>
-
-            <div id="track-image-wrapper">
-                <img id="track-image" src="" alt="Pálya fotó">
-            </div>
-
-            <div class="sidebar-section" style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <h3 style="color:var(--neon-pink); padding:0 20px; margin:10px 0; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
-                    <i class="fas fa-satellite-dish"></i> ÉLŐ FUTÁSOK
-                </h3>
-                <div id="live-runners-list" style="padding: 0 20px;">
-                </div>
-            </div>
-
-            <div id="results-container" class="results-list-container">
-                <div class="placeholder-text">
-                    <div class="placeholder-icon-bg"><i class="fas fa-map-location-dot"></i></div>
-                    <div><strong>Válassz egy pályát!</strong><br>Kattints a térképre vagy a listára.</div>
-                </div>
-            </div>
-        </aside>
-
-        <main class="map-panel">
-            <div id="track-info-overlay" class="track-info-overlay" style="display: none;">
-                <div class="overlay-main-row">
-                    <div class="overlay-item">
-                        <i class="fas fa-map-pin"></i>
-                        <span id="overlay-name" style="font-weight: 700;">Pálya</span>
-                    </div>
-                    <div class="divider"></div>
-                    <div class="overlay-item">
-                        <i class="fas fa-ruler"></i>
-                        <span id="overlay-dist">0 km</span>
-                    </div>
-                    <div class="divider"></div>
-                    <div class="overlay-item">
-                        <i class="fas fa-road"></i>
-                        <span id="overlay-surface">Aszfalt</span>
-                    </div>
-                </div>
-                <div id="overlay-features" class="overlay-features-row">
-                </div>
-            </div>
-
-            <div id="map"></div>
-        </main>
+<div class="dashboard-container">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="select-wrapper">
+        <label for="track-select" class="track-selector-label"
+          >Aktív Pálya</label
+        >
+        <i class="fas fa-chevron-down select-icon"></i>
+        <select id="track-select">
+          <option value="" disabled selected>Betöltés...</option>
+        </select>
+      </div>
     </div>
 
-    <button class="fab-btn" onclick="openResultModal()" title="Új eredmény rögzítése">
-        <i class="fas fa-plus"></i>
-    </button>
-
-    <div class="modal-overlay" id="admin-modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3><i class="fas fa-stopwatch" style="color: var(--neon-blue);"></i> Új Eredmény</h3>
-                <button onclick="closeModal('admin-modal')" style="background:none; border:none; font-size:1.2rem; cursor:pointer;"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="admin-form">
-
-                <div class="form-group">
-                    <label>Pálya</label>
-                    <div style="position:relative;">
-                        <select id="input-track" class="form-control" required>
-                            <option value="" disabled selected>-- Válassz --</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Futó Neve</label>
-                    <input type="text" id="input-name" class="form-control" placeholder="pl. Gipsz Jakab">
-                    <small id="name-lock-msg" style="display:none; color: var(--neon-blue); font-weight:600; margin-top:4px;">
-                        <i class="fas fa-lock"></i> Bejelentkezve mint: <span id="locked-name"></span>
-                    </small>
-                </div>
-
-                <div class="form-group">
-                    <label>Futás Dátuma</label>
-                    <input type="date" id="input-date" class="form-control">
-                </div>
-
-                <div class="form-group">
-                    <label>Körök</label>
-                    <input type="number" id="input-laps" class="form-control" value="1" min="1" readonly style="background:rgba(255,255,255,0.1); color:white;">
-                </div>
-
-                <div class="form-group">
-                    <label>Köridők (perc:mp)</label>
-                    <div id="laps-container" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px; padding-right:5px;"></div>
-
-                    <button type="button" class="btn-secondary" onclick="addLapInput()" style="width:100%; border:1px dashed var(--glass-border); color:var(--text-muted); background:none; padding:8px; border-radius:8px; cursor:pointer; font-size:0.9rem;">
-                        <i class="fas fa-plus"></i> Új kör hozzáadása
-                    </button>
-                </div>
-
-                <button class="btn-submit" onclick="addNewResult()">Rögzítés <i class="fas fa-arrow-right" style="margin-left: 8px;"></i></button>
-            </div>
-        </div>
+    <div id="track-image-wrapper">
+      <img id="track-image" src="" alt="Pálya fotó" />
     </div>
 
-    <div class="modal-overlay" id="analysis-modal">
-    <div class="modal-card analysis-card">
-
-        <div class="hud-corner top-left"></div>
-        <div class="hud-corner top-right"></div>
-        <div class="hud-corner bottom-left"></div>
-        <div class="hud-corner bottom-right"></div>
-
-        <div class="modal-header" style="border-bottom: 1px solid rgba(0, 243, 255, 0.2); padding-bottom: 15px;">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div class="runner-avatar-lg" id="anal-avatar" style="background: var(--neon-pink);">U</div>
-                <div>
-                    <h3 id="anal-name" style="margin: 0; color: white; text-transform: uppercase; letter-spacing: 1px;">Futó Neve</h3>
-                    <small id="anal-date" style="color: var(--neon-blue); font-family: monospace;">2026-01-08</small>
-                </div>
-            </div>
-            <button onclick="closeModal('analysis-modal')" class="close-btn-sci"><i class="fas fa-times"></i></button>
-        </div>
-
-        <div class="analysis-grid">
-
-            <div class="anal-main-stat">
-                <div class="stat-circle-container">
-                    <svg viewBox="0 0 36 36" class="circular-chart">
-                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="circle" stroke-dasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div class="circle-text">
-                        <span class="value">642</span>
-                        <span class="label">KCAL</span>
-                    </div>
-                </div>
-                <div class="xp-gain">
-                    <i class="fas fa-bolt" style="color: #ffd700;"></i> +150 XP GAINED
-                </div>
-            </div>
-
-            <div class="anal-details-list">
-
-                <div class="detail-row">
-                    <div class="icon-box"><i class="fas fa-heartbeat"></i></div>
-                    <div class="detail-info">
-                        <span class="lbl">Átlag Pulzus</span>
-                        <span class="val">145 <small>BPM</small></span>
-                    </div>
-                    <div class="bar-container"><div class="bar-fill" style="width: 70%; background: #ff4757;"></div></div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="icon-box"><i class="fas fa-fire-alt"></i></div>
-                    <div class="detail-info">
-                        <span class="lbl">Intenzitás</span>
-                        <span class="val">Magas</span>
-                    </div>
-                    <div class="bar-container"><div class="bar-fill" style="width: 85%; background: var(--neon-orange);"></div></div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="icon-box"><i class="fas fa-shoe-prints"></i></div>
-                    <div class="detail-info">
-                        <span class="lbl">Lépésszám (becsült)</span>
-                        <span class="val">4,250</span>
-                    </div>
-                    <div class="bar-container"><div class="bar-fill" style="width: 60%; background: var(--neon-blue);"></div></div>
-                </div>
-
-                <div class="rpg-stat-box">
-                    <div class="rpg-title">PLAYER STATS UPDATE</div>
-                    <div class="rpg-grid">
-                        <div class="rpg-item">STAMINA <span style="color:var(--neon-green)">+2</span></div>
-                        <div class="rpg-item">SPEED <span style="color:var(--neon-blue)">+1</span></div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <div class="scan-line-anim"></div>
+    <div
+      class="sidebar-section"
+      style="
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 10px;
+      "
+    >
+      <h3
+        style="
+          color: var(--neon-pink);
+          padding: 0 20px;
+          margin: 10px 0;
+          font-size: 0.9rem;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        "
+      >
+        <i class="fas fa-satellite-dish"></i> ÉLŐ FUTÁSOK
+      </h3>
+      <div id="live-runners-list" style="padding: 0 20px"></div>
     </div>
+
+    <div id="results-container" class="results-list-container">
+      <div class="placeholder-text">
+        <div class="placeholder-icon-bg">
+          <i class="fas fa-map-location-dot"></i>
+        </div>
+        <div>
+          <strong>Válassz egy pályát!</strong><br />Kattints a térképre vagy a
+          listára.
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="map-panel">
+    <div
+      id="track-info-overlay"
+      class="track-info-overlay"
+      style="display: none"
+    >
+      <div class="overlay-main-row">
+        <div class="overlay-item">
+          <i class="fas fa-map-pin"></i>
+          <span id="overlay-name" style="font-weight: 700">Pálya</span>
+        </div>
+        <div class="divider"></div>
+        <div class="overlay-item">
+          <i class="fas fa-ruler"></i>
+          <span id="overlay-dist">0 km</span>
+        </div>
+        <div class="divider"></div>
+        <div class="overlay-item">
+          <i class="fas fa-road"></i>
+          <span id="overlay-surface">Aszfalt</span>
+        </div>
+      </div>
+      <div id="overlay-features" class="overlay-features-row"></div>
+    </div>
+
+    <div id="map"></div>
+  </main>
 </div>
 
-{% endblock %}
+<button
+  class="fab-btn"
+  onclick="openResultModal()"
+  title="Új eredmény rögzítése"
+>
+  <i class="fas fa-plus"></i>
+</button>
 
-{% block extra_js %}
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<div class="modal-overlay" id="admin-modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>
+        <i class="fas fa-stopwatch" style="color: var(--neon-blue)"></i> Új
+        Eredmény
+      </h3>
+      <button
+        onclick="closeModal('admin-modal')"
+        style="
+          background: none;
+          border: none;
+          font-size: 1.2rem;
+          cursor: pointer;
+        "
+      >
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="admin-form">
+      <div class="form-group">
+        <label>Pálya</label>
+        <div style="position: relative">
+          <select id="input-track" class="form-control" required>
+            <option value="" disabled selected>-- Válassz --</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Futó Neve</label>
+        <input
+          type="text"
+          id="input-name"
+          class="form-control"
+          placeholder="pl. Gipsz Jakab"
+        />
+
+        <small
+          id="name-lock-msg"
+          style="
+            display: none;
+            color: var(--neon-blue);
+            font-weight: 600;
+            margin-top: 4px;
+          "
+        >
+          <i class="fas fa-lock"></i> Bejelentkezve mint:
+          <span id="locked-name"></span>
+        </small>
+
+        <div
+          style="
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+          "
+        >
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              cursor: pointer;
+              margin-bottom: 0;
+            "
+          >
+            <input
+              type="checkbox"
+              id="check-use-bio"
+              checked
+              onchange="toggleBioInputs()"
+              style="width: 16px; height: 16px; accent-color: var(--neon-blue)"
+            />
+            <span
+              style="
+                margin-left: 10px;
+                color: var(--neon-blue);
+                font-size: 0.9rem;
+                font-weight: 600;
+              "
+            >
+              Meglévő biológiai adatok használata
+            </span>
+          </label>
+
+          <div
+            id="bio-inputs-wrapper"
+            style="
+              display: none;
+              margin-top: 12px;
+              grid-template-columns: 1fr 1fr;
+              gap: 15px;
+            "
+          >
+            <div>
+              <label
+                style="
+                  font-size: 0.8rem;
+                  color: #cbd5e1;
+                  margin-bottom: 4px;
+                  display: block;
+                "
+                >Súly (kg)</label
+              >
+              <input
+                type="number"
+                id="input-weight"
+                class="form-control"
+                step="0.1"
+                placeholder="pl. 75.5"
+              />
+            </div>
+            <div>
+              <label
+                style="
+                  font-size: 0.8rem;
+                  color: #cbd5e1;
+                  margin-bottom: 4px;
+                  display: block;
+                "
+                >Magasság (cm)</label
+              >
+              <input
+                type="number"
+                id="input-height"
+                class="form-control"
+                placeholder="pl. 180"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Futás Dátuma</label>
+        <input type="date" id="input-date" class="form-control" />
+      </div>
+
+      <div class="form-group">
+        <label>Körök</label>
+        <input
+          type="number"
+          id="input-laps"
+          class="form-control"
+          value="1"
+          min="1"
+          readonly
+          style="background: rgba(255, 255, 255, 0.1); color: white"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Köridők (perc:mp)</label>
+        <div
+          id="laps-container"
+          style="
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding-right: 5px;
+          "
+        ></div>
+
+        <button
+          type="button"
+          class="btn-secondary"
+          onclick="addLapInput()"
+          style="
+            width: 100%;
+            border: 1px dashed var(--glass-border);
+            color: var(--text-muted);
+            background: none;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+          "
+        >
+          <i class="fas fa-plus"></i> Új kör hozzáadása
+        </button>
+      </div>
+
+      <button class="btn-submit" onclick="addNewResult()">
+        Rögzítés <i class="fas fa-arrow-right" style="margin-left: 8px"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="analysis-modal">
+  <div class="modal-card analysis-card">
+    <div class="hud-corner top-left"></div>
+    <div class="hud-corner top-right"></div>
+    <div class="hud-corner bottom-left"></div>
+    <div class="hud-corner bottom-right"></div>
+
+    <div
+      class="modal-header"
+      style="
+        border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+        padding-bottom: 15px;
+      "
+    >
+      <div style="display: flex; align-items: center; gap: 15px">
+        <div
+          class="runner-avatar-lg"
+          id="anal-avatar"
+          style="background: var(--neon-pink)"
+        >
+          U
+        </div>
+        <div>
+          <h3
+            id="anal-name"
+            style="
+              margin: 0;
+              color: white;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            "
+          >
+            Futó Neve
+          </h3>
+          <small
+            id="anal-date"
+            style="color: var(--neon-blue); font-family: monospace"
+            >2026-01-08</small
+          >
+        </div>
+      </div>
+      <button onclick="closeModal('analysis-modal')" class="close-btn-sci">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="analysis-grid">
+      <div class="anal-main-stat">
+        <div class="stat-circle-container">
+          <svg viewBox="0 0 36 36" class="circular-chart">
+            <path
+              class="circle-bg"
+              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+            />
+            <path
+              class="circle"
+              stroke-dasharray="75, 100"
+              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+            />
+          </svg>
+          <div class="circle-text">
+            <span class="value">642</span>
+            <span class="label">KCAL</span>
+          </div>
+        </div>
+        <div class="xp-gain">
+          <i class="fas fa-bolt" style="color: #ffd700"></i> +150 XP GAINED
+        </div>
+      </div>
+
+      <div class="anal-details-list">
+        <div class="detail-row">
+          <div class="icon-box"><i class="fas fa-heartbeat"></i></div>
+          <div class="detail-info">
+            <span class="lbl">Átlag Pulzus</span>
+            <span class="val">145 <small>BPM</small></span>
+          </div>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: 70%; background: #ff4757"></div>
+          </div>
+        </div>
+
+        <div class="detail-row">
+          <div class="icon-box"><i class="fas fa-fire-alt"></i></div>
+          <div class="detail-info">
+            <span class="lbl">Intenzitás</span>
+            <span class="val">Magas</span>
+          </div>
+          <div class="bar-container">
+            <div
+              class="bar-fill"
+              style="width: 85%; background: var(--neon-orange)"
+            ></div>
+          </div>
+        </div>
+
+        <div class="detail-row">
+          <div class="icon-box"><i class="fas fa-shoe-prints"></i></div>
+          <div class="detail-info">
+            <span class="lbl">Lépésszám (becsült)</span>
+            <span class="val">4,250</span>
+          </div>
+          <div class="bar-container">
+            <div
+              class="bar-fill"
+              style="width: 60%; background: var(--neon-blue)"
+            ></div>
+          </div>
+        </div>
+
+        <div class="rpg-stat-box">
+          <div class="rpg-title">PLAYER STATS UPDATE</div>
+          <div class="rpg-grid">
+            <div class="rpg-item">
+              STAMINA <span style="color: var(--neon-green)">+2</span>
+            </div>
+            <div class="rpg-item">
+              SPEED <span style="color: var(--neon-blue)">+1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scan-line-anim"></div>
+  </div>
+</div>
+
+{% endblock %} {% block extra_js %}
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 {% endblock %}
