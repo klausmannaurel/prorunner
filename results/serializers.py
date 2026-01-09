@@ -45,7 +45,7 @@ class ResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Result
-        fields = ('id', 'track', 'runner_name', 'time', 'laps_count', 'lap_times', 'date', 'runner_id', 'can_edit')
+        fields = ('id', 'track', 'runner_name', 'time', 'laps_count', 'lap_times', 'date', 'runner_id', 'can_edit', 'runner_weight', 'runner_height')
 
     def get_can_edit(self, obj):
         request = self.context.get('request', None)
